@@ -1,0 +1,94 @@
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import Badge from "../components/Badge";
+import { useDashboard } from "../data/dashboard";
+import { formatNumber } from "../utils/format";
+
+const FunnelKempen = () => {
+  const { filteredMetrics } = useDashboard();
+
+  const totalFlags = filteredMetrics.reduce(
+    (acc, metric) => acc + metric.flags.length,
+    0
+  );
+
+  const chartData = filteredMetrics.map((metric) => ({
+    seat: metric.seat.seat_name,
+    Base: metric.progress.base_votes,
+    Persuasi: metric.progress.persuasion_votes,
+    GOTV: metric.progress.gotv_votes,
+  }));
+
+  return (
+    <section className="stack">
+      <div className="card">
+        <h2>Funnel Kempen</h2>
+        <p className="muted">Jumlah flags: {totalFlags}</p>
+        <div className="chart-container">
+          <ResponsiveContainer width="100%" height={360}>
+            <BarChart data={chartData} margin={{ left: 24, right: 24 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="seat" tick={{ fontSize: 12 }} />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="Base" stackId="a" fill="#0ea5e9" />
+              <Bar dataKey="Persuasi" stackId="a" fill="#22c55e" />
+              <Bar dataKey="GOTV" stackId="a" fill="#f97316" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      <div className="card">
+        <h2>Jadual Funnel</h2>
+        <div className="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Kerusi</th>
+                <th>Base</th>
+                <th>Persuasi</th>
+                <th>GOTV</th>
+                <th>TotalVote</th>
+                <th>GapToWVT</th>
+                <th>Flags</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredMetrics.map((metric) => (
+                <tr key={metric.seat.seat_id}>
+                  <td>{metric.seat.seat_name}</td>
+                  <td>{formatNumber(metric.progress.base_votes)}</td>
+                  <td>{formatNumber(metric.progress.persuasion_votes)}</td>
+                  <td>{formatNumber(metric.progress.gotv_votes)}</td>
+                  <td>{formatNumber(metric.totalVote)}</td>
+                  <td className={metric.gapToWvt > 0 ? "text-danger" : "text-ok"}>
+                    {formatNumber(metric.gapToWvt)}
+                  </td>
+                  <td className="flag-cell">
+                    {metric.flags.length === 0
+                      ? "-"
+                      : metric.flags.map((flag) => (
+                          <Badge key={flag} label={flag} />
+                        ))}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default FunnelKempen;

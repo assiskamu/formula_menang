@@ -1,0 +1,9 @@
+{
+  "turnout_scenario": {
+    "low": 0.55,
+    "base": 0.65,
+    "high": 0.75
+  },
+  "spoiled_rate": 0.02,
+  "buffer_rate": 0.02
+}
