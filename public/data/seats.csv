@@ -1,0 +1,9 @@
+seat_id,seat_name,state,registered_voters,last_opponent_top_votes,last_majority,corners
+P001,Alor Merah,Kedah,56000,21000,1200,12
+P002,Bandar Utama,Selangor,82000,34000,4500,15
+P003,Cahaya Baru,Johor,61000,25000,1800,9
+P004,Dataran Indah,Perak,48000,19000,900,7
+P005,Endau Barat,Johor,73000,31000,3200,11
+P006,Fajar Selatan,Sabah,52000,22000,1500,8
+P007,Gemas Ria,Negeri Sembilan,47000,18000,700,6
+P008,Hilir Jaya,Melaka,54000,20000,1100,7
