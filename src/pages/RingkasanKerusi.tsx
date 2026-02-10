@@ -3,6 +3,8 @@ import Badge from "../components/Badge";
 import InfoTooltip from "../components/InfoTooltip";
 import KpiCard from "../components/KpiCard";
 import { useDashboard } from "../data/dashboard";
+import type { SeatMetrics } from "../data/types";
+import { actionTagGuides, getActionTagsFromText, type ActionTag } from "../data/actionTags";
 import { formatNumber, formatPercent } from "../utils/format";
 
 const toneFromMetric = (risk: string | null, target: string | null) => {
@@ -47,6 +49,68 @@ const actionTone = (action: string) => {
   return "action-neutral";
 };
 
+
+const ActionTagInfo = ({ tag }: { tag: ActionTag }) => {
+  const guide = actionTagGuides[tag];
+  const title = [
+    `${tag}`,
+    `Maksud: ${guide.maksud}`,
+    "Bila guna:",
+    ...guide.bilaGuna.map((item) => `• ${item}`),
+    "Contoh tindakan:",
+    ...guide.contohAksi.map((item) => `• ${item}`),
+  ].join("\n");
+
+  return (
+    <span className="info-tooltip action-info" title={title} aria-label={`Info ${tag}`}>
+      ⓘ
+    </span>
+  );
+};
+
+const ActionTagChips = ({ text }: { text: string }) => {
+  const tags = getActionTagsFromText(text);
+  if (tags.length === 0) return null;
+  return (
+    <span className="action-tags-inline">
+      {tags.map((tag) => (
+        <span key={tag} className={`action-chip ${actionTone(tag)}`}>
+          {tag} <ActionTagInfo tag={tag} />
+        </span>
+      ))}
+    </span>
+  );
+};
+
+const getCadanganReason = (metric: SeatMetrics) => {
+  const reasons: string[] = [];
+  const turnoutPct = metric.seat.turnout_pct;
+  const majorityVotes = metric.seat.majority_votes ?? metric.seat.last_majority ?? 0;
+  const marginToWin = metric.seat.bn_margin_to_win ?? metric.bnMarginToWin;
+
+  if (typeof turnoutPct === "number" && turnoutPct < 60) {
+    reasons.push("Turnout bawah 60%, jadi fokus GOTV untuk pastikan penyokong keluar mengundi.");
+  }
+
+  if (metric.seat.winner_party === "BN" && majorityVotes < 500) {
+    reasons.push("Kerusi BN majoriti kecil, jadi gabung BASE + GOTV untuk elak undi asas bocor.");
+  }
+
+  if (metric.seat.winner_party !== "BN" && marginToWin <= 1500) {
+    reasons.push("Jurang menang masih dekat, jadi gabung PERSUASION + GOTV untuk tambah undi dan pastikan kehadiran.");
+  }
+
+  if (!metric.seat.candidates_available) {
+    reasons.push("Pecahan calon belum ada, jadi utamakan BASE sambil kukuhkan rangkaian penyokong teras.");
+  }
+
+  if (reasons.length === 0) {
+    reasons.push("Cadangan ini ikut status semasa kerusi supaya gerak kerja lebih fokus dan konsisten.");
+  }
+
+  return reasons;
+};
+
 const RingkasanKerusi = () => {
   const { metrics, filteredMetrics, setGrain, grain, dataWarnings, dataSummary, filters, setFilters, candidatesByDun } = useDashboard();
   const dunMetrics = useMemo(() => metrics.filter((m) => m.seat.grain === "dun"), [metrics]);
@@ -68,6 +132,11 @@ const RingkasanKerusi = () => {
     if (!selectedDunMetric?.seat.dun_code) return [];
     return [...(candidatesByDun.get(selectedDunMetric.seat.dun_code) ?? [])].sort((a, b) => b.votes - a.votes);
   }, [candidatesByDun, selectedDunMetric]);
+
+  const selectedCadanganReasons = useMemo(() => {
+    if (!selectedDunMetric) return [];
+    return getCadanganReason(selectedDunMetric);
+  }, [selectedDunMetric]);
 
   const marginMax = useMemo(() => Math.max(1, ...filteredMetrics.map((metric) => metric.seat.bn_rank === 1 ? (metric.seat.bn_margin_defend ?? metric.bnBufferToLose) : (metric.seat.bn_margin_to_win ?? metric.bnMarginToWin))), [filteredMetrics]);
   const majorityMax = useMemo(() => Math.max(1, ...filteredMetrics.map((metric) => metric.seat.majority_votes ?? metric.seat.last_majority ?? 0)), [filteredMetrics]);
@@ -91,6 +160,21 @@ const RingkasanKerusi = () => {
         <div className="segmented" style={{ marginTop: 12 }}>
           <button type="button" className={grain === "parlimen" ? "active" : ""} onClick={() => setGrain("parlimen")}>Parlimen</button>
           <button type="button" className={grain === "dun" ? "active" : ""} onClick={() => setGrain("dun")}>DUN</button>
+        </div>
+      </div>
+
+      <div className="card">
+        <h3 style={{ marginTop: 0 }}>Apa maksud tag ini?</h3>
+        <div className="tag-guide-grid">
+          {(["BASE", "PERSUASION", "GOTV"] as ActionTag[]).map((tag) => (
+            <article key={tag} className="tag-guide-mini">
+              <h4>{tag}</h4>
+              <p>{actionTagGuides[tag].maksud}</p>
+              <ul>
+                {actionTagGuides[tag].contohAksi.slice(0, 2).map((item) => <li key={item}>{item}</li>)}
+              </ul>
+            </article>
+          ))}
         </div>
       </div>
 
@@ -188,7 +272,7 @@ const RingkasanKerusi = () => {
                         <small className="muted">Turnout {formatPercent(turnoutValue)}</small>
                       </div>
                     </td>
-                    <td className="flag-cell"><span className={`action-chip ${actionTone(metric.cadanganTindakan)}`}>{metric.cadanganTindakan}</span></td>
+                    <td className="flag-cell"><span className={`action-chip ${actionTone(metric.cadanganTindakan)}`}>{metric.cadanganTindakan}</span><ActionTagChips text={metric.cadanganTindakan} /></td>
                   </tr>
                 );
               })}
@@ -214,6 +298,15 @@ const RingkasanKerusi = () => {
           ) : (
             <p className="muted">Data turnout/berdaftar/majoriti belum tersedia untuk DUN ini.</p>
           )}
+
+          <div className="card" style={{ marginTop: 12 }}>
+            <h4 style={{ marginTop: 0 }}>Kenapa cadangan ini?</h4>
+            <p><strong>{selectedDunMetric.cadanganTindakan}</strong></p>
+            <ActionTagChips text={selectedDunMetric.cadanganTindakan} />
+            <ul>
+              {selectedCadanganReasons.map((reason) => <li key={reason}>{reason}</li>)}
+            </ul>
+          </div>
 
           {selectedDunMetric.seat.candidates_available ? (
             <div className="table-wrapper">
