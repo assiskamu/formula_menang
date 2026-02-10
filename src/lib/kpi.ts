@@ -71,19 +71,21 @@ export const computeSeatMetrics = (
   const turnout = assumptions.turnout_scenario[turnoutScenario] ?? 0;
   const validVotes = seat.registered_voters * turnout * (1 - assumptions.spoiled_rate);
 
-  const bnMarginToWin = seat.bn_rank === 1 ? 0 : Math.max(0, seat.winner_votes - seat.bn_votes + 1);
-  const bnMarginToWinPct = seat.bn_rank === 1 || validVotes === 0 ? 0 : bnMarginToWin / validVotes;
+  const bnMarginToWin = seat.bn_rank === 1 || seat.bn_rank === null ? 0 : Math.max(0, seat.winner_votes - seat.bn_votes + 1);
+  const bnMarginToWinPct = seat.bn_rank === 1 || seat.bn_rank === null || validVotes === 0 ? 0 : bnMarginToWin / validVotes;
   const bnBufferToLose = seat.bn_rank === 1 ? Math.max(0, seat.bn_votes - seat.runner_up_votes - 1) : 0;
   const majorityVotes = seat.bn_rank === 1 ? Math.max(0, seat.winner_votes - seat.runner_up_votes) : 0;
   const majorityPct = validVotes === 0 ? 0 : majorityVotes / validVotes;
 
   const statusCategory = seat.bn_rank === 1 ? "defend" : "attack";
   const riskLevel = seat.bn_rank === 1 ? getDefendRiskLevel(majorityVotes, majorityPct, thresholds) : null;
-  const targetLevel = seat.bn_rank === 1 ? null : getAttackLevel(bnMarginToWin, bnMarginToWinPct, thresholds);
+  const targetLevel = seat.bn_rank === 1 || seat.bn_rank === null ? null : getAttackLevel(bnMarginToWin, bnMarginToWinPct, thresholds);
   const bnStatusTag =
     seat.bn_rank === 1
       ? `BN Menang (Defend) · ${riskLevel?.replace("_", " ") ?? "risiko_rendah"}`
-      : `Sasaran ${targetLevel === "dekat" ? "Dekat" : targetLevel === "sederhana" ? "Sederhana" : "Jauh"}`;
+      : seat.bn_rank === null
+        ? "Sasaran (data calon tiada)"
+        : `Sasaran ${targetLevel === "dekat" ? "Dekat" : targetLevel === "sederhana" ? "Sederhana" : "Jauh"}`;
 
   const bufferVotes = assumptions.buffer_votes ?? Math.round(validVotes * (assumptions.buffer_rate ?? 0));
   const umm = seat.last_opponent_top_votes + 1;

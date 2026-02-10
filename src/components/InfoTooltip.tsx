@@ -7,7 +7,7 @@ type Props = {
 
 const InfoTooltip = ({ label, maksud, formula, contoh }: Props) => (
   <span className="info-tooltip" title={`${label}\n${maksud}\nFormula: ${formula}\nContoh: ${contoh}`}>
-    ⓘ
+    ?
   </span>
 );
 

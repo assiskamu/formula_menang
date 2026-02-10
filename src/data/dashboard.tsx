@@ -1,6 +1,16 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import type { Assumptions, Grain, Seat, SeatMetrics, ThresholdConfig } from "./types";
-import { buildSabahSeats, loadAssumptions, loadDunSabah, loadParlimenSabah, loadProgress, loadPrnBaseline, loadThresholds } from "./loader";
+import type { Assumptions, CandidateRow, Grain, Seat, SeatMetrics, ThresholdConfig } from "./types";
+import {
+  buildSabahSeats,
+  loadAssumptions,
+  loadCandidatesLong,
+  loadDunSabah,
+  loadParlimenSabah,
+  loadProgress,
+  loadSeatDetails,
+  loadThresholds,
+  loadWinnersMaster,
+} from "./loader";
 import { computeSeatMetrics, defaultThresholds, getLatestProgress } from "../lib/kpi";
 import { validateWinnersRows } from "./baseline";
 
@@ -31,6 +41,9 @@ const DashboardContext = createContext<{
   dunOptions: { code: string; name: string }[];
   dataWarnings: string[];
   dataSummary: { sourceFile: string; totalDun: number; bnWins: number; nonBnWins: number };
+  detailCoverage: number;
+  candidateCoverage: number;
+  candidatesByDun: Map<string, CandidateRow[]>;
 }>({
   isLoading: true,
   error: null,
@@ -49,6 +62,9 @@ const DashboardContext = createContext<{
   dunOptions: [],
   dataWarnings: [],
   dataSummary: { sourceFile: "prn_sabah_2025_winners.csv", totalDun: 0, bnWins: 0, nonBnWins: 0 },
+  detailCoverage: 0,
+  candidateCoverage: 0,
+  candidatesByDun: new Map(),
 });
 
 export const DashboardProvider = ({ children }: { children: React.ReactNode }) => {
@@ -60,6 +76,9 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
   const [metrics, setMetrics] = useState<SeatMetrics[]>([]);
   const [dataWarnings, setDataWarnings] = useState<string[]>([]);
   const [dataSummary, setDataSummary] = useState({ sourceFile: "prn_sabah_2025_winners.csv", totalDun: 0, bnWins: 0, nonBnWins: 0 });
+  const [detailCoverage, setDetailCoverage] = useState(0);
+  const [candidateCoverage, setCandidateCoverage] = useState(0);
+  const [candidatesByDun, setCandidatesByDun] = useState<Map<string, CandidateRow[]>>(new Map());
   const [filters, setFilters] = useState(defaultFilters);
   const [grain, setGrain] = useState<Grain>("parlimen");
 
@@ -81,30 +100,23 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
   useEffect(() => {
     const load = async () => {
       try {
-        const [parlimenRows, dunRows, progressRows, loadedAssumptions, baselineRows, loadedThresholds] = await Promise.all([
+        const [parlimenRows, dunRows, progressRows, loadedAssumptions, winnersRows, loadedThresholds, seatDetails, candidateRows] = await Promise.all([
           loadParlimenSabah(),
           loadDunSabah(),
           loadProgress(),
           loadAssumptions(),
-          loadPrnBaseline(),
+          loadWinnersMaster(),
           loadThresholds(),
+          loadSeatDetails(),
+          loadCandidatesLong(),
         ]);
-        const loadedSeats = buildSabahSeats(parlimenRows, dunRows, baselineRows);
-        const validation = validateWinnersRows(
-          baselineRows.map((row) => ({
-            dun_code: row.dun_code,
-            dun_name: row.dun_name,
-            winner_name: "",
-            winner_party: row.winner_party,
-            winner_votes: row.winner_votes,
-          })),
-          "prn_sabah_2025_winners.csv"
-        );
+        const built = buildSabahSeats(parlimenRows, dunRows, winnersRows, seatDetails, candidateRows);
+        const validation = validateWinnersRows(winnersRows, "prn_sabah_2025_winners.csv");
         const latestProgress = getLatestProgress(progressRows);
         const saved = localStorage.getItem(THRESHOLDS_KEY);
         const activeThresholds = saved ? (JSON.parse(saved) as ThresholdConfig) : loadedThresholds;
 
-        const dunMetrics = loadedSeats
+        const dunMetrics = built.seats
           .filter((seat) => seat.grain === "dun")
           .map((seat) => computeSeatMetrics(seat, latestProgress.get(seat.seat_id), loadedAssumptions, defaultFilters.turnoutScenario, activeThresholds));
 
@@ -115,7 +127,7 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
           groupedParlimen.set(metric.seat.parlimen_code, current);
         });
 
-        const parlimenMetrics = loadedSeats
+        const parlimenMetrics = built.seats
           .filter((seat) => seat.grain === "parlimen")
           .map((seat) => {
             const duns = groupedParlimen.get(seat.parlimen_code) ?? [];
@@ -133,11 +145,19 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
             return metric;
           });
 
-        setSeats(loadedSeats);
+        const warnings = [...validation.warnings];
+        if (built.duplicateDetails.length > 0) {
+          warnings.push(`Kod DUN berganda dalam seat_details_enriched_v3.csv: ${built.duplicateDetails.join(", ")}.`);
+        }
+
+        setSeats(built.seats);
         setAssumptions(loadedAssumptions);
         setThresholds(activeThresholds);
         setMetrics([...parlimenMetrics, ...dunMetrics]);
-        setDataWarnings(validation.warnings);
+        setDataWarnings(warnings);
+        setDetailCoverage(built.detailCoverage);
+        setCandidateCoverage(built.candidateCoverage);
+        setCandidatesByDun(built.candidateByDun);
         setDataSummary({
           sourceFile: validation.sourceFile,
           totalDun: validation.totalDun,
@@ -217,6 +237,9 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
         dunOptions,
         dataWarnings,
         dataSummary,
+        detailCoverage,
+        candidateCoverage,
+        candidatesByDun,
       }}
     >
       {children}

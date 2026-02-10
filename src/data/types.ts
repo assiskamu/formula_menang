@@ -21,7 +21,7 @@ export type PrnBaselineRow = {
   runner_up_party: string;
   runner_up_votes: number;
   bn_votes: number;
-  bn_rank: number;
+  bn_rank: number | null;
   majority: number;
   data_flags?: string[];
 };
@@ -32,6 +32,36 @@ export type WinnersRow = {
   winner_name: string;
   winner_party: string;
   winner_votes: number;
+};
+
+export type SeatDetailsRow = {
+  dun_code: string;
+  dun_name: string;
+  registered_voters: number;
+  total_votes_cast: number;
+  turnout_pct: number;
+  majority_votes: number;
+  source: string;
+};
+
+export type CandidateRow = {
+  dun_code: string;
+  dun_name: string;
+  candidate_name: string;
+  party: string;
+  votes: number;
+  vote_share_pct: number;
+};
+
+export type CandidateAggregate = {
+  dun_code: string;
+  num_candidates: number;
+  runner_up_party: string;
+  runner_up_votes: number;
+  bn_votes: number | null;
+  bn_rank: number | null;
+  bn_margin_to_win: number | null;
+  bn_margin_defend: number | null;
 };
 
 export type Grain = "parlimen" | "dun";
@@ -45,6 +75,7 @@ export type Seat = {
   parlimen_name: string;
   dun_code?: string;
   dun_name?: string;
+  winner_name?: string;
   registered_voters: number;
   registered_voters_estimated: boolean;
   last_opponent_top_votes: number;
@@ -55,7 +86,15 @@ export type Seat = {
   runner_up_party: string;
   runner_up_votes: number;
   bn_votes: number;
-  bn_rank: number;
+  bn_rank: number | null;
+  details_available?: boolean;
+  candidates_available?: boolean;
+  total_votes_cast?: number;
+  turnout_pct?: number;
+  majority_votes?: number;
+  num_candidates?: number;
+  bn_margin_to_win?: number | null;
+  bn_margin_defend?: number | null;
 };
 
 export type ProgressRow = {
