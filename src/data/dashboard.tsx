@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { Assumptions, Grain, Seat, SeatMetrics } from "./types";
-import { buildSabahSeats, loadAssumptions, loadDunSabah, loadParlimenSabah, loadProgress } from "./loader";
+import { buildSabahSeats, loadAssumptions, loadDunSabah, loadParlimenSabah, loadProgress, loadPrnBaseline } from "./loader";
 import { computeSeatMetrics, getLatestProgress } from "../lib/kpi";
 
 const defaultAssumptions: Assumptions = {
@@ -55,13 +55,14 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
   useEffect(() => {
     const load = async () => {
       try {
-        const [parlimenRows, dunRows, progressRows, loadedAssumptions] = await Promise.all([
+        const [parlimenRows, dunRows, progressRows, loadedAssumptions, baselineRows] = await Promise.all([
           loadParlimenSabah(),
           loadDunSabah(),
           loadProgress(),
           loadAssumptions(),
+          loadPrnBaseline(),
         ]);
-        const loadedSeats = buildSabahSeats(parlimenRows, dunRows);
+        const loadedSeats = buildSabahSeats(parlimenRows, dunRows, baselineRows);
         const latestProgress = getLatestProgress(progressRows);
 
         const dunMetrics = loadedSeats

@@ -16,6 +16,29 @@ export const computeSeatMetrics = (
   assumptions: Assumptions,
   turnoutScenario: string
 ): SeatMetrics => {
+  const bnMarginToWin = seat.bn_rank === 1 ? 0 : Math.max(0, seat.winner_votes - seat.bn_votes + 1);
+  const bnBufferToLose = seat.bn_rank === 1 ? Math.max(0, seat.bn_votes - seat.runner_up_votes - 1) : 0;
+  const nearThreshold = 500;
+  const mediumThreshold = 1500;
+  const bnStatusTag =
+    seat.bn_rank === 1
+      ? "BN Menang (Defend)"
+      : seat.bn_rank === 2 && bnMarginToWin <= nearThreshold
+        ? "Sasaran Dekat"
+        : seat.bn_rank === 2 && bnMarginToWin <= mediumThreshold
+          ? "Sasaran Sederhana"
+          : "Sasaran Jauh";
+  const mainOpponentParty = seat.bn_rank === 1 ? seat.runner_up_party : seat.winner_party;
+  const cadanganTindakan =
+    seat.bn_rank === 1
+      ? bnBufferToLose <= 300
+        ? "Pertahanan ketat + GOTV awal"
+        : "Kekalkan kubu dan perluas base"
+      : bnMarginToWin <= nearThreshold
+        ? "Serang kerusi pinggir melalui persuasi fokus"
+        : bnMarginToWin <= mediumThreshold
+          ? "Gabung operasi base + persuasi berfasa"
+          : "Bina asas jentera dahulu (base building)";
   const turnout = assumptions.turnout_scenario[turnoutScenario] ?? 0;
   const validVotes =
     seat.registered_voters * turnout * (1 - assumptions.spoiled_rate);
@@ -67,6 +90,11 @@ export const computeSeatMetrics = (
     swingPct,
     flags,
     neededGotvToCloseGap,
+    bnMarginToWin,
+    bnBufferToLose,
+    bnStatusTag,
+    mainOpponentParty,
+    cadanganTindakan,
   };
 };
 

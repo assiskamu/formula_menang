@@ -122,7 +122,7 @@ const Layout = () => {
       <header className="header">
         <div>
           <h1>Formula Menang</h1>
-          <p className="subtitle">Dashboard Kempen Sabah (Parlimen + DUN)</p>
+          <p className="subtitle">Dashboard BN War Room Sabah (Parlimen + DUN)</p>
         </div>
         <nav>
           <NavLink to="/" end>Ringkasan Kerusi</NavLink>
