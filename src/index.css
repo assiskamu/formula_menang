@@ -226,3 +226,47 @@ button.danger {
   background: #fee2e2;
   color: #991b1b;
 }
+
+.action-tags-inline {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.action-info {
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+}
+
+.tag-guide-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.tag-guide-mini {
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  padding: 10px;
+  background: #f8fbff;
+}
+
+.tag-guide-mini h4 {
+  margin: 0 0 6px;
+}
+
+.tag-guide-mini p {
+  margin: 0;
+  color: #334155;
+  font-size: 0.85rem;
+}
+
+.tag-guide-mini ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+  color: #1e293b;
+  font-size: 0.82rem;
+}
