@@ -3,10 +3,16 @@ import { computeSeatMetrics } from "./kpi";
 import type { Assumptions, ProgressRow, Seat } from "./types";
 
 const seat: Seat = {
-  seat_id: "P001",
-  seat_name: "Test Seat",
-  state: "Test",
+  seat_id: "N.01",
+  seat_name: "N.01 Test Seat",
+  state: "Sabah",
+  grain: "dun",
+  parlimen_code: "P.167",
+  parlimen_name: "Kudat",
+  dun_code: "N.01",
+  dun_name: "Test Seat",
   registered_voters: 10000,
+  registered_voters_estimated: true,
   last_opponent_top_votes: 4000,
   last_majority: 1000,
   corners: 5,
@@ -14,7 +20,7 @@ const seat: Seat = {
 
 const progress: ProgressRow = {
   week_start: "2024-06-03",
-  seat_id: "P001",
+  seat_id: "N.01",
   base_votes: 3500,
   persuasion_votes: 800,
   gotv_votes: 400,
@@ -40,6 +46,7 @@ describe("computeSeatMetrics", () => {
     expect(metrics.gapToWvt).toBe(metrics.wvt - 4700);
     expect(metrics.swingMin).toBe(Math.floor(1000 / 2) + 1);
     expect(metrics.swingPct).toBeCloseTo(1000 / 2 / expectedValidVotes, 5);
+    expect(metrics.flags).toContain("Data pemilih DUN: ESTIMATE");
   });
 
   it("flags data quality issues", () => {

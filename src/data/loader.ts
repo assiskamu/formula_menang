@@ -1,4 +1,4 @@
-import type { Assumptions, ProgressRow, Seat } from "./types";
+import type { Assumptions, DunRow, ParlimenRow, ProgressRow, Seat } from "./types";
 
 const parseCsv = (csvText: string) => {
   const [headerLine, ...lines] = csvText.trim().split(/\r?\n/);
@@ -14,22 +14,91 @@ const parseCsv = (csvText: string) => {
 const toNumber = (value: string | number | undefined) =>
   value === undefined ? 0 : Number(value);
 
-export const loadSeats = async () => {
-  const response = await fetch(`${import.meta.env.BASE_URL}data/seats.csv`);
+export const loadParlimenSabah = async () => {
+  const response = await fetch(`${import.meta.env.BASE_URL}data/parlimen_sabah.csv`);
   const text = await response.text();
   const records = parseCsv(text);
   return records.map(
     (record) =>
       ({
-        seat_id: record.seat_id,
-        seat_name: record.seat_name,
-        state: record.state,
-        registered_voters: toNumber(record.registered_voters),
-        last_opponent_top_votes: toNumber(record.last_opponent_top_votes),
-        last_majority: toNumber(record.last_majority),
-        corners: toNumber(record.corners),
-      }) satisfies Seat
+        parlimen_code: record.parlimen_code,
+        parlimen_name: record.parlimen_name,
+        jumlah_pemilih: toNumber(record.jumlah_pemilih),
+      }) satisfies ParlimenRow
   );
+};
+
+export const loadDunSabah = async () => {
+  const response = await fetch(`${import.meta.env.BASE_URL}data/dun_sabah.csv`);
+  const text = await response.text();
+  const records = parseCsv(text);
+  return records.map(
+    (record) =>
+      ({
+        parlimen_code: record.parlimen_code,
+        parlimen_name: record.parlimen_name,
+        dun_code: record.dun_code,
+        dun_name: record.dun_name,
+      }) satisfies DunRow
+  );
+};
+
+const estimateOpponentVotes = (registeredVoters: number) =>
+  Math.round(registeredVoters * 0.34);
+
+const estimateMajority = (registeredVoters: number) =>
+  Math.max(300, Math.round(registeredVoters * 0.04));
+
+export const buildSabahSeats = (parlimenRows: ParlimenRow[], dunRows: DunRow[]): Seat[] => {
+  const dunsByParlimen = new Map<string, DunRow[]>();
+  dunRows.forEach((row) => {
+    const current = dunsByParlimen.get(row.parlimen_code) ?? [];
+    current.push(row);
+    dunsByParlimen.set(row.parlimen_code, current);
+  });
+
+  const dunSeats: Seat[] = [];
+  const parlimenSeats: Seat[] = [];
+
+  parlimenRows.forEach((parlimen) => {
+    const duns = dunsByParlimen.get(parlimen.parlimen_code) ?? [];
+    const estimatedDunVoters = duns.length > 0 ? parlimen.jumlah_pemilih / duns.length : 0;
+
+    const parlimenSeat: Seat = {
+      seat_id: parlimen.parlimen_code,
+      seat_name: `${parlimen.parlimen_code} ${parlimen.parlimen_name}`,
+      state: "Sabah",
+      grain: "parlimen",
+      parlimen_code: parlimen.parlimen_code,
+      parlimen_name: parlimen.parlimen_name,
+      registered_voters: parlimen.jumlah_pemilih,
+      registered_voters_estimated: false,
+      last_opponent_top_votes: estimateOpponentVotes(parlimen.jumlah_pemilih),
+      last_majority: estimateMajority(parlimen.jumlah_pemilih),
+      corners: 3,
+    };
+    parlimenSeats.push(parlimenSeat);
+
+    duns.forEach((dun) => {
+      dunSeats.push({
+        seat_id: dun.dun_code,
+        seat_name: `${dun.dun_code} ${dun.dun_name}`,
+        state: "Sabah",
+        grain: "dun",
+        parlimen_code: dun.parlimen_code,
+        parlimen_name: dun.parlimen_name,
+        dun_code: dun.dun_code,
+        dun_name: dun.dun_name,
+        registered_voters: estimatedDunVoters,
+        registered_voters_estimated: true,
+        last_opponent_top_votes: estimateOpponentVotes(estimatedDunVoters),
+        last_majority: estimateMajority(estimatedDunVoters),
+        corners: 3,
+      });
+    });
+  });
+
+  return [...parlimenSeats, ...dunSeats];
 };
 
 export const loadProgress = async () => {

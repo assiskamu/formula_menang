@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import type { Assumptions, Seat, SeatMetrics } from "./types";
-import { loadAssumptions, loadProgress, loadSeats } from "./loader";
+import type { Assumptions, Grain, Seat, SeatMetrics } from "./types";
+import { buildSabahSeats, loadAssumptions, loadDunSabah, loadParlimenSabah, loadProgress } from "./loader";
 import { computeSeatMetrics, getLatestProgress } from "./kpi";
 
 const defaultAssumptions: Assumptions = {
@@ -10,8 +10,8 @@ const defaultAssumptions: Assumptions = {
 };
 
 const defaultFilters = {
-  state: "",
-  seat: "",
+  parlimen: "",
+  dun: "",
   turnoutScenario: "base",
 };
 
@@ -21,20 +21,26 @@ const DashboardContext = createContext<{
   assumptions: Assumptions;
   metrics: SeatMetrics[];
   filteredMetrics: SeatMetrics[];
+  parlimenMetrics: SeatMetrics[];
   filters: typeof defaultFilters;
   setFilters: React.Dispatch<React.SetStateAction<typeof defaultFilters>>;
-  seatOptions: Seat[];
-  stateOptions: string[];
+  grain: Grain;
+  setGrain: React.Dispatch<React.SetStateAction<Grain>>;
+  parlimenOptions: { code: string; name: string }[];
+  dunOptions: { code: string; name: string }[];
 }>({
   isLoading: true,
   error: null,
   assumptions: defaultAssumptions,
   metrics: [],
   filteredMetrics: [],
+  parlimenMetrics: [],
   filters: defaultFilters,
   setFilters: () => undefined,
-  seatOptions: [],
-  stateOptions: [],
+  grain: "parlimen",
+  setGrain: () => undefined,
+  parlimenOptions: [],
+  dunOptions: [],
 });
 
 export const DashboardProvider = ({ children }: { children: React.ReactNode }) => {
@@ -44,30 +50,62 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
   const [assumptions, setAssumptions] = useState<Assumptions>(defaultAssumptions);
   const [metrics, setMetrics] = useState<SeatMetrics[]>([]);
   const [filters, setFilters] = useState(defaultFilters);
+  const [grain, setGrain] = useState<Grain>("parlimen");
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [loadedSeats, progressRows, loadedAssumptions] = await Promise.all([
-          loadSeats(),
+        const [parlimenRows, dunRows, progressRows, loadedAssumptions] = await Promise.all([
+          loadParlimenSabah(),
+          loadDunSabah(),
           loadProgress(),
           loadAssumptions(),
         ]);
+        const loadedSeats = buildSabahSeats(parlimenRows, dunRows);
         const latestProgress = getLatestProgress(progressRows);
-        const computed = loadedSeats.map((seat) =>
-          computeSeatMetrics(
-            seat,
-            latestProgress.get(seat.seat_id),
-            loadedAssumptions,
-            filters.turnoutScenario
-          )
-        );
+
+        const dunMetrics = loadedSeats
+          .filter((seat) => seat.grain === "dun")
+          .map((seat) =>
+            computeSeatMetrics(
+              seat,
+              latestProgress.get(seat.seat_id),
+              loadedAssumptions,
+              defaultFilters.turnoutScenario
+            )
+          );
+
+        const groupedParlimen = new Map<string, SeatMetrics[]>();
+        dunMetrics.forEach((metric) => {
+          const current = groupedParlimen.get(metric.seat.parlimen_code) ?? [];
+          current.push(metric);
+          groupedParlimen.set(metric.seat.parlimen_code, current);
+        });
+
+        const parlimenMetrics = loadedSeats
+          .filter((seat) => seat.grain === "parlimen")
+          .map((seat) => {
+            const duns = groupedParlimen.get(seat.parlimen_code) ?? [];
+            const mergedProgress = {
+              week_start: duns[0]?.progress.week_start ?? "",
+              seat_id: seat.seat_id,
+              base_votes: duns.reduce((acc, item) => acc + item.progress.base_votes, 0),
+              persuasion_votes: duns.reduce((acc, item) => acc + item.progress.persuasion_votes, 0),
+              gotv_votes: duns.reduce((acc, item) => acc + item.progress.gotv_votes, 0),
+              persuadables: duns.reduce((acc, item) => acc + item.progress.persuadables, 0),
+              conversion_rate: 0,
+            };
+            const metric = computeSeatMetrics(seat, mergedProgress, loadedAssumptions, defaultFilters.turnoutScenario);
+            metric.flags = Array.from(new Set([...metric.flags, ...duns.flatMap((item) => item.flags)]));
+            return metric;
+          });
+
         setSeats(loadedSeats);
         setAssumptions(loadedAssumptions);
-        setMetrics(computed);
+        setMetrics([...parlimenMetrics, ...dunMetrics]);
         setError(null);
       } catch (err) {
-        setError("Gagal memuatkan data. Sila semak fail data.");
+        setError("Gagal memuatkan data Sabah. Sila semak fail data.");
       } finally {
         setIsLoading(false);
       }
@@ -89,27 +127,40 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
     );
   }, [assumptions, filters.turnoutScenario, seats.length]);
 
-  const stateOptions = useMemo(
-    () => Array.from(new Set(seats.map((seat) => seat.state))).sort(),
+  const parlimenOptions = useMemo(
+    () =>
+      seats
+        .filter((seat) => seat.grain === "parlimen")
+        .map((seat) => ({ code: seat.parlimen_code, name: seat.parlimen_name }))
+        .sort((a, b) => a.code.localeCompare(b.code)),
     [seats]
   );
 
-  const seatOptions = useMemo(
-    () => seats.slice().sort((a, b) => a.seat_name.localeCompare(b.seat_name)),
-    [seats]
-  );
+  const dunOptions = useMemo(() => {
+    return seats
+      .filter((seat) => seat.grain === "dun")
+      .filter((seat) => !filters.parlimen || seat.parlimen_code === filters.parlimen)
+      .map((seat) => ({ code: seat.dun_code ?? "", name: seat.dun_name ?? "" }))
+      .sort((a, b) => a.code.localeCompare(b.code));
+  }, [filters.parlimen, seats]);
 
   const filteredMetrics = useMemo(() => {
     return metrics.filter((metric) => {
-      if (filters.state && metric.seat.state !== filters.state) {
+      if (metric.seat.grain !== grain) return false;
+      if (filters.parlimen && metric.seat.parlimen_code !== filters.parlimen) {
         return false;
       }
-      if (filters.seat && metric.seat.seat_id !== filters.seat) {
+      if (filters.dun && metric.seat.dun_code !== filters.dun) {
         return false;
       }
       return true;
     });
-  }, [filters.seat, filters.state, metrics]);
+  }, [filters.dun, filters.parlimen, grain, metrics]);
+
+  const parlimenMetrics = useMemo(
+    () => metrics.filter((metric) => metric.seat.grain === "parlimen"),
+    [metrics]
+  );
 
   return (
     <DashboardContext.Provider
@@ -119,10 +170,13 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
         assumptions,
         metrics,
         filteredMetrics,
+        parlimenMetrics,
         filters,
         setFilters,
-        seatOptions,
-        stateOptions,
+        grain,
+        setGrain,
+        parlimenOptions,
+        dunOptions,
       }}
     >
       {children}

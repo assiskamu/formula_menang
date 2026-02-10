@@ -1,6 +1,6 @@
-# Formula Menang Dashboard
+# Formula Menang Dashboard (Sabah Sahaja)
 
-Dashboard kempen statik untuk memantau ringkasan kerusi, funnel kempen, dan operasi GOTV.
+Dashboard kempen statik untuk memantau ringkasan **Parlimen + DUN Sabah**.
 
 ## Jalankan secara lokal
 
@@ -16,41 +16,37 @@ npm run build
 npm run preview
 ```
 
-## Kemas kini data
+## Dataset Sabah
 
-Fail data disimpan di `public/data/` supaya boleh diakses oleh aplikasi tanpa backend.
+Master dataset disediakan dalam `/data` dan disalin ke `public/data` untuk loading dalam app:
 
-- `public/data/seats.csv`
-- `public/data/progress_weekly.csv`
-- `public/data/assumptions.json`
+- `data/parlimen_sabah.csv` – P.167 hingga P.191 (Labuan P.166 dikecualikan).
+- `data/dun_sabah.csv` – pemetaan Parlimen Sabah ke DUN N.01 hingga N.73.
+- `public/data/progress_weekly.csv` – data mingguan berasaskan DUN.
+- `public/data/assumptions.json` – senario turnout dan parameter formula.
 
-Setiap kali anda mengubah data, muat semula aplikasi untuk melihat kemas kini.
+## Grain KPI yang disokong
 
-## KPI dan andaian
+KPI dikira dengan formula asal, tetapi kini menyokong 2 grain:
 
-**Formula**
-- `ValidVotes = registered_voters * turnout * (1 - spoiled_rate)`
-- `UMM = last_opponent_top_votes + 1`
-- `WVT = (last_opponent_top_votes + 1) + buffer_votes`
-  - Jika `buffer_rate` disediakan, `buffer_votes = round(ValidVotes * buffer_rate)`
-- `TotalVote = base_votes + persuasion_votes + gotv_votes`
-- `GapToWVT = WVT - TotalVote`
-- `SwingMin ≈ floor(last_majority / 2) + 1`
-- `SwingPct ≈ (last_majority / 2) / ValidVotes`
+- **Parlimen**: agregat (jumlah) daripada semua DUN di bawah Parlimen.
+- **DUN**: metrik per DUN.
 
-**Flags kualiti data**
-- turnout luar julat `[0, 1]`
-- spoiled_rate luar julat `[0, 0.10]`
-- `TotalVote > ValidVotes`
-- `WVT > ValidVotes`
+## Andaian data pemilih DUN (ESTIMATE)
 
-## GitHub Pages
+Jika jumlah pemilih DUN tidak disediakan, sistem menganggarkan:
 
-Aplikasi dibina dengan `base` tetap: `/formula_menang/` supaya serasi dengan GitHub Pages untuk repo ini.
+`registered_voters_dun = jumlah_pemilih_parlimen / bilangan_dun_dalam_parlimen`
 
-Workflow GitHub Actions `Deploy to GitHub Pages` akan bina `dist/` dan deploy automatik pada push ke `main`.
+Paparan UI melabelkan rekod ini sebagai **ESTIMATE** dan menambah flag kualiti data `Data pemilih DUN: ESTIMATE`.
 
-Selepas deployment berjaya, URL dashboard boleh didapati di:
+## Penapis UI
 
-- **Settings → Pages** dalam repo ini, atau
-- URL standard: `https://<username>.github.io/formula_menang/`.
+Dashboard kini ada penapis berikut:
+
+- Parlimen (Sabah sahaja)
+- DUN (cascading ikut Parlimen)
+- Senario turnout
+- Paparan grain (Parlimen / DUN)
+
+Paparan lalai ialah **Ringkasan Parlimen** dengan butang **Drilldown DUN**.
