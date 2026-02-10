@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Badge from "../components/Badge";
 import InfoTooltip from "../components/InfoTooltip";
 import KpiCard from "../components/KpiCard";
@@ -113,6 +113,9 @@ const getCadanganReason = (metric: SeatMetrics) => {
 
 const RingkasanKerusi = () => {
   const { metrics, filteredMetrics, setGrain, grain, dataWarnings, dataSummary, filters, setFilters, candidatesByDun } = useDashboard();
+  const [mobilePriorityTab, setMobilePriorityTab] = useState<"near" | "risk">("near");
+  const [mode, setMode] = useState<"ringkas" | "analitik">("ringkas");
+  const [showDetailSheet, setShowDetailSheet] = useState(false);
   const dunMetrics = useMemo(() => metrics.filter((m) => m.seat.grain === "dun"), [metrics]);
   const bnSeatsWon = useMemo(() => dunMetrics.filter((m) => m.seat.winner_party === "BN"), [dunMetrics]);
   const defendSeats = bnSeatsWon;
@@ -140,6 +143,20 @@ const RingkasanKerusi = () => {
 
   const marginMax = useMemo(() => Math.max(1, ...filteredMetrics.map((metric) => metric.seat.bn_rank === 1 ? (metric.seat.bn_margin_defend ?? metric.bnBufferToLose) : (metric.seat.bn_margin_to_win ?? metric.bnMarginToWin))), [filteredMetrics]);
   const majorityMax = useMemo(() => Math.max(1, ...filteredMetrics.map((metric) => metric.seat.majority_votes ?? metric.seat.last_majority ?? 0)), [filteredMetrics]);
+  const isAnalitik = mode === "analitik";
+
+  const copyRingkasan = async () => {
+    if (!selectedDunMetric) return;
+    const summary = [
+      `*${selectedDunMetric.seat.seat_name}*`,
+      `Status BN: ${selectedDunMetric.bnStatusTag}`,
+      `Margin BN: ${formatNumber(selectedDunMetric.seat.bn_rank === 1 ? (selectedDunMetric.seat.bn_margin_defend ?? selectedDunMetric.bnBufferToLose) : (selectedDunMetric.seat.bn_margin_to_win ?? selectedDunMetric.bnMarginToWin))} undi`,
+      `Majority: ${formatNumber(selectedDunMetric.seat.majority_votes ?? selectedDunMetric.seat.last_majority ?? 0)}`,
+      `Turnout: ${formatPercent((selectedDunMetric.seat.turnout_pct ?? 0) / 100)}`,
+      `Tindakan: ${selectedDunMetric.cadanganTindakan}`,
+    ].join("\n");
+    await navigator.clipboard.writeText(summary);
+  };
 
   return (
     <section className="stack">
@@ -161,9 +178,13 @@ const RingkasanKerusi = () => {
           <button type="button" className={grain === "parlimen" ? "active" : ""} onClick={() => setGrain("parlimen")}>Parlimen</button>
           <button type="button" className={grain === "dun" ? "active" : ""} onClick={() => setGrain("dun")}>DUN</button>
         </div>
+        <div className="segmented" style={{ marginTop: 12 }}>
+          <button type="button" className={mode === "ringkas" ? "active" : ""} onClick={() => setMode("ringkas")}>Mode Ringkas</button>
+          <button type="button" className={mode === "analitik" ? "active" : ""} onClick={() => setMode("analitik")}>Mode Analitik</button>
+        </div>
       </div>
 
-      <div className="card">
+      {isAnalitik && <div className="card">
         <h3 style={{ marginTop: 0 }}>Apa maksud tag ini?</h3>
         <div className="tag-guide-grid">
           {(["BASE", "PERSUASION", "GOTV"] as ActionTag[]).map((tag) => (
@@ -176,7 +197,7 @@ const RingkasanKerusi = () => {
             </article>
           ))}
         </div>
-      </div>
+      </div>}
 
       <div className="grid grid-kpi">
         <KpiCard label="BN Seats Won" value={formatNumber(bnSeatsWon.length)} helper="Bilangan DUN dimenangi BN" tooltip={{ maksud: "Bilangan DUN yang BN menang.", formula: "kira(winner_party = 'BN')", contoh: "Jika 6 DUN BN menang, nilai = 6" }} />
@@ -185,16 +206,16 @@ const RingkasanKerusi = () => {
         <KpiCard label="Defend Risk" value={`${formatNumber(defendRisk500)} / ${formatNumber(defendRisk1000)}`} helper="Majoriti <500 / <1000" tooltip={{ maksud: "Bilangan kerusi BN berisiko mengikut julat majoriti.", formula: "kira(majority<500) dan kira(majority<1000)", contoh: "3 kerusi <500, 9 kerusi <1000 => 3 / 9" }} />
       </div>
 
-      <div className="card">
+      {isAnalitik && <div className="card">
         <SectionHeader icon="🧭" title="Ringkasan" tone="blue" />
         <p className="muted">Sumber data: {dataSummary.sourceFile}</p>
         <p className="muted">Total DUN: {formatNumber(dataSummary.totalDun)} · BN Wins: {formatNumber(dataSummary.bnWins)} · Non-BN Wins: {formatNumber(dataSummary.nonBnWins)}</p>
         {dataWarnings.map((warning) => (
           <p key={warning} style={{ color: "#b45309", fontWeight: 600 }}>{warning}</p>
         ))}
-      </div>
+      </div>}
 
-      <div className="grid two-col">
+      <div className="grid two-col desktop-priority-grid">
         <div className="card">
           <SectionHeader icon="🎯" title="Top Sasaran" tone="purple" />
           {topNear.length > 0 ? (
@@ -226,7 +247,51 @@ const RingkasanKerusi = () => {
         </div>
       </div>
 
-      <div className="card">
+      <div className="card mobile-priority-tabs">
+        <div className="segmented mobile-tab-switcher">
+          <button type="button" className={mobilePriorityTab === "near" ? "active" : ""} onClick={() => setMobilePriorityTab("near")}>Sasaran Dekat</button>
+          <button type="button" className={mobilePriorityTab === "risk" ? "active" : ""} onClick={() => setMobilePriorityTab("risk")}>Paling Berisiko</button>
+        </div>
+        {mobilePriorityTab === "near" ? (
+          <div>
+            <SectionHeader icon="🎯" title="Top 10 Sasaran Dekat" tone="purple" />
+            {topNear.length > 0 ? (
+              <ol className="priority-list">
+                {topNear.map((m) => (
+                  <li key={m.seat.seat_id}>
+                    <strong>{m.seat.seat_name}</strong>
+                    <span>Perlu +{formatNumber(m.bnMarginToWin)} undi ({formatPercent(m.bnMarginToWinPct)})</span>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <div className="empty-state">
+                <p>Tiada sasaran dekat ditemui.</p>
+                <ul>
+                  <li>Filter terlalu sempit (hanya defend).</li>
+                  <li>Semua kerusi bukan-BN berada dalam kategori sederhana/jauh.</li>
+                </ul>
+                <button type="button" onClick={() => setFilters((prev) => ({ ...prev, parlimen: "", dun: "" }))}>Reset Filter</button>
+                <button type="button" onClick={() => setMode("analitik")}>Buka Mode Analitik</button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div>
+            <SectionHeader icon="🛡️" title="Top 10 Paling Berisiko" tone="amber" />
+            <ol className="priority-list">
+              {topRisk.map((m) => (
+                <li key={m.seat.seat_id}>
+                  <strong>{m.seat.seat_name}</strong>
+                  <span>Buffer BN {formatNumber(m.bnBufferToLose)} undi</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
+      </div>
+
+      <div className="card desktop-table-view">
         <SectionHeader icon="📊" title="Jadual Kerusi" tone="indigo" />
         <div className="table-legend" role="note" aria-label="Legend indikator jadual">
           <span><strong>Buffer BN</strong>: beza BN dengan pencabar jika BN menang.</span>
@@ -281,8 +346,33 @@ const RingkasanKerusi = () => {
         </div>
       </div>
 
+      <div className="mobile-card-list">
+        {filteredMetrics.map((metric) => {
+          const availability = availabilityBadge(metric.seat.details_available, metric.seat.candidates_available);
+          const marginValue = metric.seat.bn_rank === 1 ? (metric.seat.bn_margin_defend ?? metric.bnBufferToLose) : (metric.seat.bn_margin_to_win ?? metric.bnMarginToWin);
+          const majorityValue = metric.seat.majority_votes ?? metric.seat.last_majority ?? 0;
+          const turnoutValue = (metric.seat.turnout_pct ?? 0) / 100;
+          return (
+            <article className="card seat-card" key={metric.seat.seat_id}>
+              <h3>{metric.seat.dun_code} · {metric.seat.dun_name}</h3>
+              <div className="flag-cell">
+                <Badge label={availability.label} tone={availability.tone} />
+                <Badge label={metric.bnStatusTag} tone={toneFromMetric(metric.riskLevel, metric.targetLevel)} />
+              </div>
+              <p className="muted">Margin to win/defend: <strong>{formatNumber(marginValue)}</strong></p>
+              <p className="muted">Majority: <strong>{formatNumber(majorityValue)}</strong> · Turnout: <strong>{formatPercent(turnoutValue)}</strong></p>
+              <div className="flag-cell">
+                <span className={`action-chip ${actionTone(metric.cadanganTindakan)}`}>{metric.cadanganTindakan}</span>
+                <ActionTagChips text={metric.cadanganTindakan} />
+              </div>
+              <button type="button" onClick={() => { setFilters((prev) => ({ ...prev, dun: metric.seat.dun_code })); setShowDetailSheet(true); }}>Lihat Butiran</button>
+            </article>
+          );
+        })}
+      </div>
+
       {selectedDunMetric && (
-        <div className="card">
+        <div className="card desktop-detail-panel">
           <SectionHeader icon="🗺️" title={`Butiran DUN: ${selectedDunMetric.seat.seat_name}`} tone="teal" />
           <p>
             Pemenang master: <strong>{selectedDunMetric.seat.winner_name ?? "-"}</strong> ({selectedDunMetric.seat.winner_party}) — {formatNumber(selectedDunMetric.seat.winner_votes)} undi.
@@ -303,6 +393,7 @@ const RingkasanKerusi = () => {
             <h4 style={{ marginTop: 0 }}>Kenapa cadangan ini?</h4>
             <p><strong>{selectedDunMetric.cadanganTindakan}</strong></p>
             <ActionTagChips text={selectedDunMetric.cadanganTindakan} />
+            <button type="button" onClick={copyRingkasan}>Copy ringkasan (WhatsApp)</button>
             <ul>
               {selectedCadanganReasons.map((reason) => <li key={reason}>{reason}</li>)}
             </ul>
@@ -334,6 +425,22 @@ const RingkasanKerusi = () => {
           ) : (
             <p className="muted">Candidate breakdown not available.</p>
           )}
+        </div>
+      )}
+
+      {selectedDunMetric && showDetailSheet && (
+        <div className="bottom-sheet-overlay" role="dialog" aria-modal="true" aria-label="Butiran DUN" onClick={() => setShowDetailSheet(false)}>
+          <div className="bottom-sheet" onClick={(event) => event.stopPropagation()}>
+            <div className="bottom-sheet-header">
+              <h2>{selectedDunMetric.seat.seat_name}</h2>
+              <button type="button" onClick={() => setShowDetailSheet(false)} aria-label="Tutup butiran">Tutup</button>
+            </div>
+            <p>Status BN: <strong>{selectedDunMetric.bnStatusTag}</strong></p>
+            <p>Majority: <strong>{formatNumber(selectedDunMetric.seat.majority_votes ?? selectedDunMetric.seat.last_majority ?? 0)}</strong></p>
+            <p>Turnout: <strong>{formatPercent((selectedDunMetric.seat.turnout_pct ?? 0) / 100)}</strong></p>
+            <p>Cadangan: <strong>{selectedDunMetric.cadanganTindakan}</strong></p>
+            <button type="button" onClick={copyRingkasan}>Copy ringkasan (WhatsApp)</button>
+          </div>
         </div>
       )}
     </section>
