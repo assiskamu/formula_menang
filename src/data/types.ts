@@ -53,6 +53,27 @@ export type CandidateRow = {
   vote_share_pct: number;
 };
 
+export type LocalSeatOverride = {
+  registered_voters?: number;
+  total_votes_cast?: number;
+  turnout_pct?: number;
+  majority_votes?: number;
+};
+
+export type LocalCandidateOverride = {
+  candidate_name: string;
+  party: string;
+  votes: number;
+  vote_share_pct?: number;
+};
+
+export type LocalOverrides = {
+  version: 1;
+  updatedAtISO: string;
+  seatDetails: Record<string, LocalSeatOverride>;
+  candidates: Record<string, LocalCandidateOverride[]>;
+};
+
 export type CandidateAggregate = {
   dun_code: string;
   num_candidates: number;
