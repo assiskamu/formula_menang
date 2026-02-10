@@ -1,0 +1,10 @@
+{
+  "attack": {
+    "dekat": { "margin_votes": 500, "margin_pct": 0.02 },
+    "sederhana": { "margin_votes": 1500, "margin_pct": 0.05 }
+  },
+  "defend": {
+    "risiko_tinggi": { "majority_votes": 300, "majority_pct": 0.01 },
+    "risiko_sederhana": { "majority_votes": 800, "majority_pct": 0.025 }
+  }
+}
