@@ -7,6 +7,8 @@ import type { SeatMetrics } from "../data/types";
 import { actionTagGuides, getActionTagsFromText, type ActionTag } from "../data/actionTags";
 import { formatNumber, formatPercent } from "../utils/format";
 
+const scenarioLabel: Record<string, string> = { low: "Rendah", base: "Sederhana", high: "Tinggi" };
+
 const toneFromMetric = (risk: string | null, target: string | null) => {
   if (risk === "risiko_tinggi") return "danger" as const;
   if (risk === "risiko_sederhana") return "warn" as const;
@@ -111,6 +113,9 @@ const RingkasanKerusi = () => {
   const [mobilePriorityTab, setMobilePriorityTab] = useState<"near" | "risk">("near");
   const [mode, setMode] = useState<"ringkas" | "analitik">("ringkas");
   const [showDetailSheet, setShowDetailSheet] = useState(false);
+  const [showCaraGuna, setShowCaraGuna] = useState(false);
+  const [tableSearch, setTableSearch] = useState("");
+  const [tableSort, setTableSort] = useState<"default" | "risk" | "target" | "turnout">("default");
   const dunMetrics = useMemo(() => metrics.filter((m) => m.seat.grain === "dun"), [metrics]);
   const bnSeatsWon = useMemo(() => dunMetrics.filter((m) => m.seat.winner_party === "BN"), [dunMetrics]);
   const defendSeats = bnSeatsWon;
@@ -139,6 +144,47 @@ const RingkasanKerusi = () => {
   const marginMax = useMemo(() => Math.max(1, ...filteredMetrics.map((metric) => metric.seat.bn_rank === 1 ? (metric.seat.bn_margin_defend ?? metric.bnBufferToLose) : (metric.seat.bn_margin_to_win ?? metric.bnMarginToWin))), [filteredMetrics]);
   const majorityMax = useMemo(() => Math.max(1, ...filteredMetrics.map((metric) => metric.seat.majority_votes ?? metric.seat.last_majority ?? 0)), [filteredMetrics]);
   const isAnalitik = mode === "analitik";
+  const viewLabel = grain === "parlimen" ? "Parlimen" : "DUN";
+  const modeLabel = mode === "ringkas" ? "Mode Ringkas" : "Mode Analitik";
+  const selectedParlimenLabel = filters.parlimen || "Semua Parlimen";
+  const turnoutLabel = scenarioLabel[filters.turnoutScenario] ?? filters.turnoutScenario;
+
+  const tableMetrics = useMemo(() => {
+    const query = tableSearch.trim().toLowerCase();
+    const searched = query
+      ? filteredMetrics.filter((metric) => {
+        const haystack = [
+          metric.seat.dun_code,
+          metric.seat.dun_name,
+          metric.seat.parlimen_code,
+          metric.seat.parlimen_name,
+          metric.seat.winner_party,
+          metric.mainOpponentParty,
+        ].join(" ").toLowerCase();
+        return haystack.includes(query);
+      })
+      : filteredMetrics;
+
+    const sorted = [...searched];
+    if (tableSort === "risk") {
+      sorted.sort((a, b) => (a.seat.majority_votes ?? a.seat.last_majority ?? Number.MAX_SAFE_INTEGER) - (b.seat.majority_votes ?? b.seat.last_majority ?? Number.MAX_SAFE_INTEGER));
+    }
+    if (tableSort === "target") {
+      sorted.sort((a, b) => (a.seat.bn_rank === 1 ? Number.MAX_SAFE_INTEGER : a.seat.bn_margin_to_win ?? a.bnMarginToWin) - (b.seat.bn_rank === 1 ? Number.MAX_SAFE_INTEGER : b.seat.bn_margin_to_win ?? b.bnMarginToWin));
+    }
+    if (tableSort === "turnout") {
+      sorted.sort((a, b) => (a.seat.turnout_pct ?? Number.MAX_SAFE_INTEGER) - (b.seat.turnout_pct ?? Number.MAX_SAFE_INTEGER));
+    }
+
+    return sorted;
+  }, [filteredMetrics, tableSearch, tableSort]);
+
+  const todayPriorities = useMemo(() => {
+    const target = topNear[0] ?? null;
+    const risk = topRisk[0] ?? null;
+    const lowTurnout = [...filteredMetrics].sort((a, b) => (a.seat.turnout_pct ?? Number.MAX_SAFE_INTEGER) - (b.seat.turnout_pct ?? Number.MAX_SAFE_INTEGER))[0] ?? null;
+    return { target, risk, lowTurnout };
+  }, [filteredMetrics, topNear, topRisk]);
 
   const copyRingkasan = async () => {
     if (!selectedDunMetric) return;
@@ -155,19 +201,11 @@ const RingkasanKerusi = () => {
 
   return (
     <section className="stack">
-      <details className="card">
-        <summary><strong>Cara Guna Dashboard (Ringkas)</strong></summary>
-        <ol>
-          <li>Pilih Parlimen atau DUN.</li>
-          <li>Tengok Ringkasan: BN Menang, Defend, dan Target.</li>
-          <li>Rujuk Top Risiko & Top Sasaran untuk susun keutamaan.</li>
-          <li>Klik DUN untuk lihat butiran & cadangan tindakan (GOTV/Persuasion/Base).</li>
-        </ol>
-        <p className="muted"><strong>Nota Data:</strong> 73 DUN sentiasa dipaparkan. Jika data calon tiada, dashboard guna keputusan pemenang sahaja. Anda boleh tambah data sendiri melalui tab "Kemas Kini Data".</p>
-      </details>
-
       <div className="card">
-        <h2>Ringkasan BN War Room</h2>
+        <div className="title-row">
+          <h2>Ringkasan BN War Room</h2>
+          <button type="button" className="cara-guna-button" onClick={() => setShowCaraGuna(true)}>Cara Guna (1 min)</button>
+        </div>
         <p className="muted">Pantau kerusi defend & sasaran dengan tag risiko/prioriti yang boleh dilaras di panel Tetapan.</p>
         <div className="segmented" style={{ marginTop: 12 }}>
           <button type="button" className={grain === "parlimen" ? "active" : ""} onClick={() => setGrain("parlimen")}>Parlimen</button>
@@ -177,6 +215,22 @@ const RingkasanKerusi = () => {
           <button type="button" className={mode === "ringkas" ? "active" : ""} onClick={() => setMode("ringkas")}>Mode Ringkas</button>
           <button type="button" className={mode === "analitik" ? "active" : ""} onClick={() => setMode("analitik")}>Mode Analitik</button>
         </div>
+        <p className="context-label">Paparan: {viewLabel} • {modeLabel} • {selectedParlimenLabel} • Turnout {turnoutLabel}</p>
+      </div>
+
+      <div className="grid three-col compact-priority-grid">
+        <article className="card compact-priority-card">
+          <h4>Prioriti Hari Ini: Sasaran</h4>
+          {todayPriorities.target ? <p>{todayPriorities.target.seat.seat_name} · +{formatNumber(todayPriorities.target.bnMarginToWin)} undi</p> : <p className="muted">Tiada sasaran dekat.</p>}
+        </article>
+        <article className="card compact-priority-card">
+          <h4>Prioriti Hari Ini: Defend</h4>
+          {todayPriorities.risk ? <p>{todayPriorities.risk.seat.seat_name} · buffer {formatNumber(todayPriorities.risk.bnBufferToLose)}</p> : <p className="muted">Tiada kerusi defend.</p>}
+        </article>
+        <article className="card compact-priority-card">
+          <h4>Prioriti Hari Ini: Turnout</h4>
+          {todayPriorities.lowTurnout ? <p>{todayPriorities.lowTurnout.seat.seat_name} · turnout {formatPercent((todayPriorities.lowTurnout.seat.turnout_pct ?? 0) / 100)}</p> : <p className="muted">Tiada data turnout.</p>}
+        </article>
       </div>
 
       {isAnalitik && <div className="card">
@@ -224,8 +278,14 @@ const RingkasanKerusi = () => {
             </ol>
           ) : (
             <div className="empty-state">
-              <p>Tiada sasaran dekat untuk paparan semasa. Ini biasanya berlaku kerana semua kerusi dalam skop filter adalah defend atau sasaran sederhana/jauh.</p>
+              <p>Top Sasaran kosong kerana tiada kerusi bukan-BN dalam kategori "dekat" untuk paparan semasa.</p>
+              <ul>
+                <li>Filter mungkin terlalu sempit (hanya defend).</li>
+                <li>Kerusi sasaran semasa berada pada kategori sederhana/jauh.</li>
+              </ul>
               <button type="button" onClick={() => setFilters((prev) => ({ ...prev, parlimen: "", dun: "" }))}>Reset Filter</button>
+              <button type="button" onClick={() => setGrain("dun")}>Switch ke Target View (DUN)</button>
+              <button type="button" onClick={() => setMode("analitik")}>Buka Mode Analitik</button>
             </div>
           )}
         </div>
@@ -288,6 +348,21 @@ const RingkasanKerusi = () => {
 
       <div className="card desktop-table-view">
         <SectionHeader icon="📊" title="Jadual Kerusi" tone="indigo" />
+        <div className="table-controls" role="group" aria-label="Carian dan susunan jadual kerusi">
+          <input
+            type="search"
+            value={tableSearch}
+            onChange={(event) => setTableSearch(event.target.value)}
+            placeholder="Cari DUN / Parlimen / Parti"
+            aria-label="Cari DUN, Parlimen atau parti"
+          />
+          <select value={tableSort} onChange={(event) => setTableSort(event.target.value as "default" | "risk" | "target" | "turnout")} aria-label="Susun jadual kerusi">
+            <option value="default">Susun: Lalai</option>
+            <option value="risk">Risiko (majoriti kecil)</option>
+            <option value="target">Target (margin menang kecil)</option>
+            <option value="turnout">Turnout terendah</option>
+          </select>
+        </div>
         <div className="table-legend" role="note" aria-label="Legend indikator jadual">
           <span><strong>Buffer BN</strong>: beza BN dengan pencabar jika BN menang.</span>
           <span><strong>Margin to Win</strong>: tambahan undi diperlukan jika BN kalah.</span>
@@ -308,7 +383,7 @@ const RingkasanKerusi = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredMetrics.map((metric) => {
+              {tableMetrics.map((metric) => {
                 const availability = availabilityBadge(metric.seat.details_available, metric.seat.candidates_available);
                 const marginValue = metric.seat.bn_rank === 1 ? (metric.seat.bn_margin_defend ?? metric.bnBufferToLose) : (metric.seat.bn_margin_to_win ?? metric.bnMarginToWin);
                 const majorityValue = metric.seat.majority_votes ?? metric.seat.last_majority ?? 0;
@@ -342,7 +417,7 @@ const RingkasanKerusi = () => {
       </div>
 
       <div className="mobile-card-list">
-        {filteredMetrics.map((metric) => {
+        {tableMetrics.map((metric) => {
           const availability = availabilityBadge(metric.seat.details_available, metric.seat.candidates_available);
           const marginValue = metric.seat.bn_rank === 1 ? (metric.seat.bn_margin_defend ?? metric.bnBufferToLose) : (metric.seat.bn_margin_to_win ?? metric.bnMarginToWin);
           const majorityValue = metric.seat.majority_votes ?? metric.seat.last_majority ?? 0;
@@ -435,6 +510,22 @@ const RingkasanKerusi = () => {
             <p>Turnout: <strong>{formatPercent((selectedDunMetric.seat.turnout_pct ?? 0) / 100)}</strong></p>
             <p>Cadangan: <strong>{selectedDunMetric.cadanganTindakan}</strong></p>
             <button type="button" onClick={copyRingkasan}>Copy ringkasan (WhatsApp)</button>
+          </div>
+        </div>
+      )}
+
+      {showCaraGuna && (
+        <div className="modal-backdrop cara-guna-overlay" role="dialog" aria-modal="true" aria-label="Cara guna 1 minit" onClick={() => setShowCaraGuna(false)}>
+          <div className="card modal-card cara-guna-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="bottom-sheet-header">
+              <h2>Cara Guna (1 min)</h2>
+              <button type="button" onClick={() => setShowCaraGuna(false)} aria-label="Tutup cara guna">Tutup</button>
+            </div>
+            <ol>
+              <li>Pilih <strong>Paparan Parlimen/DUN</strong> dan tetapkan <strong>senario turnout</strong> ikut bacaan semasa.</li>
+              <li>Semak <strong>Prioriti Hari Ini</strong> serta <strong>Top Sasaran / Top Risiko</strong> untuk susun tugasan lapangan.</li>
+              <li>Gunakan <strong>carian + susunan jadual</strong> untuk fokus kerusi kritikal sebelum tindakan GOTV/Persuasion/Base.</li>
+            </ol>
           </div>
         </div>
       )}

@@ -170,25 +170,22 @@ const DataCoverageBanner = () => {
   );
 };
 
-const CaraGunaModal = () => {
+const BackToTop = () => {
   const [show, setShow] = useState(false);
+
   useEffect(() => {
-    const seen = localStorage.getItem("formula-menang-onboarding-v1");
-    if (!seen) setShow(true);
+    const handler = () => setShow(window.scrollY > 380);
+    handler();
+    window.addEventListener("scroll", handler, { passive: true });
+    return () => window.removeEventListener("scroll", handler);
   }, []);
+
   if (!show) return null;
+
   return (
-    <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="Cara guna">
-      <div className="card modal-card">
-        <h2>Cara guna (3 langkah)</h2>
-        <ol>
-          <li>Pilih Parlimen atau DUN yang anda mahu semak.</li>
-          <li>Pilih senario turnout: Rendah, Sederhana, atau Tinggi.</li>
-          <li>Tengok status BN, jurang sasaran, dan cadangan tindakan.</li>
-        </ol>
-        <button type="button" onClick={() => { localStorage.setItem("formula-menang-onboarding-v1", "1"); setShow(false); }}>Faham, tutup</button>
-      </div>
-    </div>
+    <button type="button" className="back-to-top" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} aria-label="Kembali ke atas">
+      ↑ Atas
+    </button>
   );
 };
 
@@ -206,7 +203,6 @@ const Layout = () => {
   if (error) return <div className="page">{error}</div>;
   return (
     <div className="app">
-      <CaraGunaModal />
       <header className="header">
         <div>
           <h1>Formula Menang</h1>
@@ -257,6 +253,7 @@ const Layout = () => {
           </div>
         </div>
       )}
+      <BackToTop />
     </div>
   );
 };

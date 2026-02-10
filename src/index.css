@@ -27,6 +27,7 @@ select, button, input { padding: 8px 12px; border-radius: 10px; border: 1px soli
 .grid { display: grid; gap: 14px; }
 .grid-kpi { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
 .two-col { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+.three-col { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
 
 .card { background: #fff; border-radius: 14px; padding: 18px; box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08); border: 1px solid #e2e8f0; }
 .kpi-card { display: flex; flex-direction: column; gap: 6px; }
@@ -167,6 +168,89 @@ th { white-space: nowrap; }
 .priority-list { display: grid; gap: 10px; padding-left: 20px; }
 .priority-list li { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #f8fafc; border:1px solid #e2e8f0; border-radius: 12px; }
 
+.title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.title-row h2 {
+  margin: 0;
+}
+
+.cara-guna-button {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #1e3a8a;
+  font-weight: 700;
+}
+
+.context-label {
+  margin: 10px 0 0;
+  color: #1e3a8a;
+  font-size: 0.85rem;
+  padding: 8px 10px;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  background: #f0f7ff;
+}
+
+.compact-priority-grid {
+  margin-top: -2px;
+}
+
+.compact-priority-card {
+  padding: 12px 14px;
+}
+
+.compact-priority-card h4 {
+  margin: 0 0 6px;
+  font-size: 0.85rem;
+  color: #1e3a8a;
+}
+
+.compact-priority-card p {
+  margin: 0;
+  font-size: 0.86rem;
+}
+
+.table-controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.table-controls input {
+  min-width: 240px;
+  flex: 1;
+}
+
+.cara-guna-modal {
+  width: min(620px, 100%);
+}
+
+.cara-guna-modal ol {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+}
+
+.back-to-top {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 130;
+  border-radius: 999px;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.24);
+  background: #1d4ed8;
+  color: #fff;
+  border-color: #1e40af;
+}
+
 .modal-backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); display: grid; place-items: center; padding: 16px; z-index: 100; }
 .modal-card { width: min(560px, 100%); }
 
@@ -179,6 +263,20 @@ th { white-space: nowrap; }
   .table-legend { grid-template-columns: 1fr; }
   .card { padding: 14px; border-radius: 12px; }
   .section-header h3 { font-size: 0.92rem; }
+  .table-controls input,
+  .table-controls select { width: 100%; min-width: 0; }
+  .cara-guna-overlay {
+    align-items: end;
+    place-items: unset;
+    padding: 0;
+  }
+  .cara-guna-modal {
+    width: 100%;
+    border-radius: 20px 20px 0 0;
+    max-height: 85vh;
+    overflow-y: auto;
+    margin: 0;
+  }
 }
 .coverage-banner {
   display: grid;
