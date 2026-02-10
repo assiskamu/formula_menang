@@ -81,6 +81,36 @@ describe("BN formulas and GapToWVT", () => {
     expect(metric.majorityPct).toBeCloseTo(300 / validVotes, 6);
   });
 
+
+  it("returns zero margin when BN data absent", () => {
+    const seat: Seat = {
+      ...seatBase,
+      winner_party: "PH",
+      winner_votes: 5200,
+      runner_up_party: "WARISAN",
+      runner_up_votes: 5000,
+      bn_votes: 0,
+      bn_rank: null,
+    };
+    const metric = computeSeatMetrics(seat, progress, assumptions, "base", defaultThresholds);
+    expect(metric.bnMarginToWin).toBe(0);
+    expect(metric.bnStatusTag).toContain("data calon tiada");
+  });
+
+  it("handles tie case for BN winner with zero defend margin", () => {
+    const seat: Seat = {
+      ...seatBase,
+      winner_party: "BN",
+      winner_votes: 5000,
+      runner_up_party: "PH",
+      runner_up_votes: 5000,
+      bn_votes: 5000,
+      bn_rank: 1,
+    };
+    const metric = computeSeatMetrics(seat, progress, assumptions, "base", defaultThresholds);
+    expect(metric.bnBufferToLose).toBe(0);
+  });
+
   it("keeps GapToWVT positive when target not reached", () => {
     const seat: Seat = {
       ...seatBase,

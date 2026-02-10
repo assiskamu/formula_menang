@@ -14,8 +14,26 @@ const toneFromMetric = (risk: string | null, target: string | null) => {
   return "neutral" as const;
 };
 
+const partyColor = (party: string) => {
+  const palette: Record<string, string> = {
+    BN: "#1d4ed8",
+    PH: "#f97316",
+    GRS: "#0f766e",
+    WARISAN: "#9333ea",
+    KDM: "#be123c",
+    BEBAS: "#374151",
+  };
+  return palette[party.toUpperCase()] ?? "#6b7280";
+};
+
+const availabilityBadge = (details?: boolean, candidates?: boolean) => {
+  if (details && candidates) return { label: "Lengkap", tone: "ok" as const };
+  if (details || candidates) return { label: "Sebahagian", tone: "warn" as const };
+  return { label: "Tiada", tone: "neutral" as const };
+};
+
 const RingkasanKerusi = () => {
-  const { metrics, filteredMetrics, setGrain, grain, dataWarnings, dataSummary } = useDashboard();
+  const { metrics, filteredMetrics, setGrain, grain, dataWarnings, dataSummary, filters, candidatesByDun } = useDashboard();
   const dunMetrics = useMemo(() => metrics.filter((m) => m.seat.grain === "dun"), [metrics]);
   const bnSeatsWon = useMemo(() => dunMetrics.filter((m) => m.seat.winner_party === "BN"), [dunMetrics]);
   const defendSeats = bnSeatsWon;
@@ -23,6 +41,16 @@ const RingkasanKerusi = () => {
   const targetSeats = Math.max(0, 73 - defendSeats.length);
   const topNear = useMemo(() => attackSeats.filter((m) => m.targetLevel === "dekat").sort((a, b) => a.bnMarginToWin - b.bnMarginToWin).slice(0, 10), [attackSeats]);
   const topRisk = useMemo(() => [...defendSeats].sort((a, b) => a.bnBufferToLose - b.bnBufferToLose).slice(0, 10), [defendSeats]);
+
+  const selectedDunMetric = useMemo(() => {
+    if (filters.dun) return dunMetrics.find((m) => m.seat.dun_code === filters.dun) ?? null;
+    return filteredMetrics.find((m) => m.seat.grain === "dun") ?? dunMetrics[0] ?? null;
+  }, [dunMetrics, filteredMetrics, filters.dun]);
+
+  const selectedCandidates = useMemo(() => {
+    if (!selectedDunMetric?.seat.dun_code) return [];
+    return [...(candidatesByDun.get(selectedDunMetric.seat.dun_code) ?? [])].sort((a, b) => b.votes - a.votes);
+  }, [candidatesByDun, selectedDunMetric]);
 
   return (
     <section className="stack">
@@ -36,7 +64,7 @@ const RingkasanKerusi = () => {
       </div>
 
       <div className="grid grid-kpi">
-        <KpiCard label="BN Seats Won" value={formatNumber(bnSeatsWon.length)} tooltip={{ maksud: "Bilangan DUN yang BN menang secara ketat.", formula: "kira(winner_party = 'BN')", contoh: "Jika 6 DUN BN menang, nilai = 6" }} />
+        <KpiCard label="BN Seats Won" value={formatNumber(bnSeatsWon.length)} tooltip={{ maksud: "Bilangan DUN yang BN menang.", formula: "kira(winner_party = 'BN')", contoh: "Jika 6 DUN BN menang, nilai = 6" }} />
         <KpiCard label="Defend Seats" value={formatNumber(defendSeats.length)} tooltip={{ maksud: "Kerusi yang perlu dipertahankan BN.", formula: "Sama seperti BN Seats Won", contoh: "25 kerusi menang = 25 defend" }} />
         <KpiCard label="Target Seats" value={formatNumber(targetSeats)} tooltip={{ maksud: "Kerusi BN belum menang dan perlu diserang.", formula: "73 - Defend Seats", contoh: "73 - 6 = 67" }} />
       </div>
@@ -45,7 +73,7 @@ const RingkasanKerusi = () => {
         <p className="muted">Sumber data: {dataSummary.sourceFile}</p>
         <p className="muted">Total DUN: {formatNumber(dataSummary.totalDun)} · BN Wins: {formatNumber(dataSummary.bnWins)} · Non-BN Wins: {formatNumber(dataSummary.nonBnWins)}</p>
         {dataWarnings.map((warning) => (
-          <p key={warning} style={{ color: "#f59e0b", fontWeight: 600 }}>{warning}</p>
+          <p key={warning} style={{ color: "#b45309", fontWeight: 600 }}>{warning}</p>
         ))}
       </div>
 
@@ -80,30 +108,80 @@ const RingkasanKerusi = () => {
             <thead>
               <tr>
                 <th>DUN</th>
+                <th>Ketersediaan</th>
                 <th>Status BN <InfoTooltip label="Status BN" maksud="Tag defend/sasaran berdasarkan threshold." formula="rule defend atau attack" contoh="Margin 400 => Sasaran Dekat" /></th>
-                <th>Lawan Utama</th>
-                <th>BN_MarginToWin <InfoTooltip label="BN_MarginToWin" maksud="Undi tambahan minimum BN jika belum menang." formula="(winner_votes - bn_votes) + 1" contoh="5,000 - 4,650 +1 = 351" /></th>
-                <th>BN_BufferToLose <InfoTooltip label="BN_BufferToLose" maksud="Berapa undi masih boleh bocor sebelum BN kalah." formula="(bn_votes - runner_up_votes) - 1" contoh="5,200 - 5,000 -1 = 199" /></th>
-                <th>Majority% <InfoTooltip label="Majority%" maksud="Kekuatan majoriti BN berbanding undi sah." formula="majority_votes / ValidVotes" contoh="600/30,000 = 2%" /></th>
+                <th>Lawan Utama <InfoTooltip label="Runner-up" maksud="Pihak di tempat kedua berdasarkan undi calon." formula="Susun ikut votes desc, ambil ke-2" contoh="5,100 BN, 4,900 PH => runner-up PH" /></th>
+                <th>BN margin to win/defend <InfoTooltip label="BN margin" maksud="Jika BN kalah: undi tambahan untuk menang. Jika BN menang: beza dengan runner-up." formula="To win=(top-bn+1), Defend=(bn-runnerup)" contoh="Kalah 4,800 vs 5,000 => 201" /></th>
+                <th>Majority <InfoTooltip label="Majority" maksud="Beza undi pemenang dan calon kedua." formula="winner_votes - runner_up_votes" contoh="5,100-4,900=200" /></th>
                 <th>Cadangan Tindakan</th>
               </tr>
             </thead>
             <tbody>
-              {filteredMetrics.map((metric) => (
-                <tr key={metric.seat.seat_id}>
-                  <td>{metric.seat.seat_name}</td>
-                  <td className="flag-cell"><Badge label={metric.bnStatusTag} tone={toneFromMetric(metric.riskLevel, metric.targetLevel)} /></td>
-                  <td>{metric.mainOpponentParty}</td>
-                  <td>{formatNumber(metric.bnMarginToWin)}</td>
-                  <td>{formatNumber(metric.bnBufferToLose)}</td>
-                  <td>{formatPercent(metric.majorityPct)}</td>
-                  <td className="flag-cell"><Badge label={metric.cadanganTindakan} tone="info" /></td>
-                </tr>
-              ))}
+              {filteredMetrics.map((metric) => {
+                const availability = availabilityBadge(metric.seat.details_available, metric.seat.candidates_available);
+                return (
+                  <tr key={metric.seat.seat_id}>
+                    <td>{metric.seat.seat_name}</td>
+                    <td className="flag-cell"><Badge label={availability.label} tone={availability.tone} /></td>
+                    <td className="flag-cell"><Badge label={metric.bnStatusTag} tone={toneFromMetric(metric.riskLevel, metric.targetLevel)} /></td>
+                    <td>{metric.mainOpponentParty}</td>
+                    <td>{metric.seat.bn_rank === 1 ? formatNumber(metric.seat.bn_margin_defend ?? metric.bnBufferToLose) : formatNumber(metric.seat.bn_margin_to_win ?? metric.bnMarginToWin)}</td>
+                    <td>{formatNumber(metric.seat.majority_votes ?? metric.seat.last_majority)}</td>
+                    <td className="flag-cell"><Badge label={metric.cadanganTindakan} tone="info" /></td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       </div>
+
+      {selectedDunMetric && (
+        <div className="card">
+          <h3>Butiran DUN: {selectedDunMetric.seat.seat_name}</h3>
+          <p>
+            Pemenang master: <strong>{selectedDunMetric.seat.winner_name ?? "-"}</strong> ({selectedDunMetric.seat.winner_party}) — {formatNumber(selectedDunMetric.seat.winner_votes)} undi.
+          </p>
+
+          {selectedDunMetric.seat.details_available ? (
+            <div className="detail-stats">
+              <p>Registered Voters <InfoTooltip label="Registered Voters" maksud="Bilangan pengundi berdaftar dalam DUN." formula="Data rasmi berdaftar" contoh="15,896" />: <strong>{formatNumber(selectedDunMetric.seat.registered_voters)}</strong></p>
+              <p>Total Votes Cast: <strong>{formatNumber(selectedDunMetric.seat.total_votes_cast ?? 0)}</strong></p>
+              <p>Turnout% <InfoTooltip label="Turnout%" maksud="Peratus keluar mengundi dari pengundi berdaftar." formula="total_votes_cast / registered_voters" contoh="11,891/15,896=74.8%" />: <strong>{formatPercent((selectedDunMetric.seat.turnout_pct ?? 0) / 100)}</strong></p>
+              <p>Majority <InfoTooltip label="Majority" maksud="Beza undi pemenang dengan calon kedua." formula="winner - runner_up" contoh="1,070" />: <strong>{formatNumber(selectedDunMetric.seat.majority_votes ?? 0)}</strong></p>
+            </div>
+          ) : (
+            <p className="muted">Data turnout/berdaftar/majoriti belum tersedia untuk DUN ini.</p>
+          )}
+
+          {selectedDunMetric.seat.candidates_available ? (
+            <div className="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Calon</th>
+                    <th>Parti</th>
+                    <th>Undi</th>
+                    <th>% Undi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedCandidates.map((candidate) => (
+                    <tr key={`${candidate.dun_code}-${candidate.candidate_name}-${candidate.party}`} className={candidate.party === "BN" ? "bn-highlight" : ""}>
+                      <td>{candidate.candidate_name}</td>
+                      <td><span className="party-pill" style={{ backgroundColor: partyColor(candidate.party) }}>{candidate.party || "Tidak diketahui"}</span></td>
+                      <td>{formatNumber(candidate.votes)}</td>
+                      <td>{formatPercent(candidate.vote_share_pct / 100)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="muted">Candidate breakdown not available.</p>
+          )}
+        </div>
+      )}
     </section>
   );
 };

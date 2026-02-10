@@ -5,6 +5,7 @@ import RingkasanKerusi from "./pages/RingkasanKerusi";
 import FunnelKempen from "./pages/FunnelKempen";
 import OperasiGotv from "./pages/OperasiGotv";
 import BantuanFormula from "./pages/BantuanFormula";
+import PeneranganIstilah from "./pages/PeneranganIstilah";
 
 const scenarioLabel: Record<string, string> = { low: "Rendah", base: "Sederhana", high: "Tinggi" };
 
@@ -79,6 +80,17 @@ const Filters = () => {
   );
 };
 
+
+const DataCoverageBanner = () => {
+  const { detailCoverage, candidateCoverage } = useDashboard();
+  return (
+    <div className="coverage-banner" role="status">
+      <strong>Data lengkap (turnout/berdaftar/majoriti) tersedia untuk {detailCoverage}/73 DUN</strong>
+      <strong>Data pecahan calon tersedia untuk {candidateCoverage}/73 DUN</strong>
+    </div>
+  );
+};
+
 const CaraGunaModal = () => {
   const [show, setShow] = useState(false);
   useEffect(() => {
@@ -118,8 +130,10 @@ const Layout = () => {
           <NavLink to="/funnel">Funnel Kempen</NavLink>
           <NavLink to="/gotv">Operasi GOTV</NavLink>
           <NavLink to="/bantuan">Bantuan & Maksud Angka</NavLink>
+          <NavLink to="/penerangan">Penerangan Istilah</NavLink>
         </nav>
       </header>
+      <DataCoverageBanner />
       <Filters />
       <TetapanThreshold />
       <main className="page">
@@ -128,6 +142,7 @@ const Layout = () => {
           <Route path="/funnel" element={<FunnelKempen />} />
           <Route path="/gotv" element={<OperasiGotv />} />
           <Route path="/bantuan" element={<BantuanFormula />} />
+          <Route path="/penerangan" element={<PeneranganIstilah />} />
         </Routes>
       </main>
     </div>
