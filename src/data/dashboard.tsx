@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { Assumptions, Grain, Seat, SeatMetrics } from "./types";
 import { buildSabahSeats, loadAssumptions, loadDunSabah, loadParlimenSabah, loadProgress } from "./loader";
-import { computeSeatMetrics, getLatestProgress } from "./kpi";
+import { computeSeatMetrics, getLatestProgress } from "../lib/kpi";
 
 const defaultAssumptions: Assumptions = {
   turnout_scenario: { low: 0.55, base: 0.65, high: 0.75 },
@@ -104,7 +104,7 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
         setAssumptions(loadedAssumptions);
         setMetrics([...parlimenMetrics, ...dunMetrics]);
         setError(null);
-      } catch (err) {
+      } catch {
         setError("Gagal memuatkan data Sabah. Sila semak fail data.");
       } finally {
         setIsLoading(false);
@@ -127,6 +127,10 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
     );
   }, [assumptions, filters.turnoutScenario, seats.length]);
 
+  useEffect(() => {
+    setGrain(filters.dun ? "dun" : "parlimen");
+  }, [filters.dun]);
+
   const parlimenOptions = useMemo(
     () =>
       seats
@@ -147,12 +151,8 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
   const filteredMetrics = useMemo(() => {
     return metrics.filter((metric) => {
       if (metric.seat.grain !== grain) return false;
-      if (filters.parlimen && metric.seat.parlimen_code !== filters.parlimen) {
-        return false;
-      }
-      if (filters.dun && metric.seat.dun_code !== filters.dun) {
-        return false;
-      }
+      if (filters.parlimen && metric.seat.parlimen_code !== filters.parlimen) return false;
+      if (filters.dun && metric.seat.dun_code !== filters.dun) return false;
       return true;
     });
   }, [filters.dun, filters.parlimen, grain, metrics]);

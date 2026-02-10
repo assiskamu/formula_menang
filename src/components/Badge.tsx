@@ -1,5 +1,5 @@
-const Badge = ({ label }: { label: string }) => (
-  <span className="badge">{label}</span>
+const Badge = ({ label, tone = "warn" }: { label: string; tone?: "warn" | "ok" | "info" }) => (
+  <span className={`badge badge-${tone}`}>{label}</span>
 );
 
 export default Badge;

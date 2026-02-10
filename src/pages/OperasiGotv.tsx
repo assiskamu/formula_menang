@@ -26,15 +26,15 @@ const OperasiGotv = () => {
       </div>
 
       <div className="card">
-        <h2>GOTV Shortfall</h2>
+        <h2>Jurang GOTV</h2>
         <div className="table-wrapper">
           <table>
             <thead>
               <tr>
                 <th>Kerusi</th>
                 <th>GOTV Semasa</th>
-                <th>Needed GOTV</th>
-                <th>GapToWVT</th>
+                <th>Keperluan GOTV</th>
+                <th>Jurang ke Sasaran</th>
                 <th>Flags</th>
               </tr>
             </thead>
