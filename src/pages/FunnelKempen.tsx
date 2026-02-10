@@ -58,8 +58,8 @@ const FunnelKempen = () => {
                 <th>Base</th>
                 <th>Persuasi</th>
                 <th>GOTV</th>
-                <th>TotalVote</th>
-                <th>GapToWVT</th>
+                <th>Jumlah Undi Dijangka</th>
+                <th>Jurang ke Sasaran</th>
                 <th>Flags</th>
               </tr>
             </thead>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeSeatMetrics } from "./kpi";
+import { computeSeatMetrics, getSeatActionNotes } from "../lib/kpi";
 import type { Assumptions, ProgressRow, Seat } from "./types";
 
 const seat: Seat = {
@@ -46,15 +46,24 @@ describe("computeSeatMetrics", () => {
     expect(metrics.gapToWvt).toBe(metrics.wvt - 4700);
     expect(metrics.swingMin).toBe(Math.floor(1000 / 2) + 1);
     expect(metrics.swingPct).toBeCloseTo(1000 / 2 / expectedValidVotes, 5);
-    expect(metrics.flags).toContain("Data pemilih DUN: ESTIMATE");
+    expect(metrics.flags).toContain("Data pemilih DUN adalah anggaran");
   });
 
-  it("flags data quality issues", () => {
+  it("uses buffer_votes when provided", () => {
+    const withFixedBuffer = computeSeatMetrics(seat, progress, { ...assumptions, buffer_votes: 123 }, "base");
+    expect(withFixedBuffer.wvt).toBe(4001 + 123);
+  });
+
+  it("flags data quality issues and gives action notes", () => {
     const badAssumptions = {
       ...assumptions,
       spoiled_rate: 0.2,
+      turnout_scenario: { high: 1.2 },
     };
-    const metrics = computeSeatMetrics(seat, progress, badAssumptions, "high");
-    expect(metrics.flags).toContain("Spoiled rate luar julat");
+    const unrealisticProgress = { ...progress, base_votes: 8000, persuasion_votes: 3000, gotv_votes: 1000 };
+    const metrics = computeSeatMetrics(seat, unrealisticProgress, badAssumptions, "high");
+    expect(metrics.flags).toContain("Undi rosak di luar julat 0 hingga 0.10");
+    expect(metrics.flags).toContain("Turnout di luar julat 0 hingga 1");
+    expect(getSeatActionNotes(metrics).join(" ")).toContain("Sasaran tak realistik");
   });
 });

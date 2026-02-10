@@ -1,6 +1,18 @@
 # Formula Menang Dashboard (Sabah Sahaja)
 
-Dashboard kempen statik untuk memantau ringkasan **Parlimen + DUN Sabah**.
+Aplikasi web ini membantu pasukan kempen faham kedudukan kerusi **Parlimen dan DUN Sabah** dengan bahasa mudah.
+
+## Tujuan app
+
+- Tunjuk status semasa kerusi: selamat, hampir capai, atau masih tertinggal.
+- Terangkan maksud formula menang terus dalam aplikasi.
+- Bantu pasukan buat keputusan tindakan cepat (persuasi, GOTV, semakan data).
+
+## Siapa boleh guna
+
+- Ketua jentera Parlimen/DUN
+- Pengarah operasi lapangan
+- Petugas data asas (tanpa latar belakang teknikal)
 
 ## Jalankan secara lokal
 
@@ -9,44 +21,37 @@ npm install
 npm run dev
 ```
 
-Untuk binaan produksi:
+Binaan produksi:
 
 ```bash
 npm run build
 npm run preview
 ```
 
-## Dataset Sabah
+## Cara update data
 
-Master dataset disediakan dalam `/data` dan disalin ke `public/data` untuk loading dalam app:
+Semua data berada dalam `public/data/` (dan sumber asal di `data/`):
 
-- `data/parlimen_sabah.csv` – P.167 hingga P.191 (Labuan P.166 dikecualikan).
-- `data/dun_sabah.csv` – pemetaan Parlimen Sabah ke DUN N.01 hingga N.73.
-- `public/data/progress_weekly.csv` – data mingguan berasaskan DUN.
-- `public/data/assumptions.json` – senario turnout dan parameter formula.
+- `parlimen_sabah.csv` — senarai Parlimen Sabah sahaja
+- `dun_sabah.csv` — pemetaan DUN Sabah ikut Parlimen
+- `progress_weekly.csv` — kemas kini mingguan `base_votes`, `persuasion_votes`, `gotv_votes`
+- `assumptions.json` — andaian turnout, undi rosak, dan buffer
 
-## Grain KPI yang disokong
+Langkah ringkas:
 
-KPI dikira dengan formula asal, tetapi kini menyokong 2 grain:
+1. Kemas kini fail CSV/JSON.
+2. Pastikan kod kerusi betul (contoh `P.167`, `N.01`).
+3. Jalankan `npm run dev` untuk semak paparan.
+4. Jalankan `npm run test` sebelum push.
 
-- **Parlimen**: agregat (jumlah) daripada semua DUN di bawah Parlimen.
-- **DUN**: metrik per DUN.
+## Maksud KPI ringkas
 
-## Andaian data pemilih DUN (ESTIMATE)
+- **Undi Sah (Anggaran)** = `Berdaftar × Turnout × (1 − Undi Rosak)`
+- **UMM (Minimum Menang)** = `Undi lawan tertinggi + 1`
+- **WVT (Sasaran Selamat)** = `UMM + Buffer`
+- **Jumlah Undi Dijangka** = `Base + Persuasion + GOTV`
+- **Jurang ke Sasaran** = `WVT − TotalVote` (positif = masih kurang undi)
+- **Swing Min (anggaran)** = `floor(Majoriti/2) + 1` (sesuai rujukan kerusi 2 penjuru)
+- **Swing %** ≈ `(Majoriti/2) / UndiSah`
 
-Jika jumlah pemilih DUN tidak disediakan, sistem menganggarkan:
-
-`registered_voters_dun = jumlah_pemilih_parlimen / bilangan_dun_dalam_parlimen`
-
-Paparan UI melabelkan rekod ini sebagai **ESTIMATE** dan menambah flag kualiti data `Data pemilih DUN: ESTIMATE`.
-
-## Penapis UI
-
-Dashboard kini ada penapis berikut:
-
-- Parlimen (Sabah sahaja)
-- DUN (cascading ikut Parlimen)
-- Senario turnout
-- Paparan grain (Parlimen / DUN)
-
-Paparan lalai ialah **Ringkasan Parlimen** dengan butang **Drilldown DUN**.
+> Rujukan penuh ada dalam menu **Bantuan & Maksud Formula** dalam app.
