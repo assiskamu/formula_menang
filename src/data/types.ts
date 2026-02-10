@@ -66,6 +66,21 @@ export type Assumptions = {
   buffer_rate?: number;
 };
 
+export type AttackThresholds = {
+  dekat: { margin_votes: number; margin_pct: number };
+  sederhana: { margin_votes: number; margin_pct: number };
+};
+
+export type DefendThresholds = {
+  risiko_tinggi: { majority_votes: number; majority_pct: number };
+  risiko_sederhana: { majority_votes: number; majority_pct: number };
+};
+
+export type ThresholdConfig = {
+  attack: AttackThresholds;
+  defend: DefendThresholds;
+};
+
 export type SeatMetrics = {
   seat: Seat;
   progress: ProgressRow;
@@ -80,8 +95,13 @@ export type SeatMetrics = {
   flags: string[];
   neededGotvToCloseGap: number;
   bnMarginToWin: number;
+  bnMarginToWinPct: number;
   bnBufferToLose: number;
+  majorityPct: number;
   bnStatusTag: string;
+  statusCategory: "defend" | "attack";
+  riskLevel: "risiko_tinggi" | "risiko_sederhana" | "risiko_rendah" | null;
+  targetLevel: "dekat" | "sederhana" | "jauh" | null;
   mainOpponentParty: string;
   cadanganTindakan: string;
 };

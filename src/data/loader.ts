@@ -1,4 +1,4 @@
-import type { Assumptions, DunRow, ParlimenRow, ProgressRow, PrnBaselineRow, Seat } from "./types";
+import type { Assumptions, DunRow, ParlimenRow, ProgressRow, PrnBaselineRow, Seat, ThresholdConfig } from "./types";
 
 const parseCsv = (csvText: string) => {
   const [headerLine, ...lines] = csvText.trim().split(/\r?\n/);
@@ -173,4 +173,10 @@ export const loadProgress = async () => {
 export const loadAssumptions = async () => {
   const response = await fetch(`${import.meta.env.BASE_URL}data/assumptions.json`);
   return (await response.json()) as Assumptions;
+};
+
+
+export const loadThresholds = async () => {
+  const response = await fetch(`${import.meta.env.BASE_URL}data/thresholds.json`);
+  return (await response.json()) as ThresholdConfig;
 };

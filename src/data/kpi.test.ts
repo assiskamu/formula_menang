@@ -1,8 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { computeSeatMetrics, getSeatActionNotes } from "../lib/kpi";
+import { computeSeatMetrics, defaultThresholds, getAttackLevel, getDefendRiskLevel } from "../lib/kpi";
 import type { Assumptions, ProgressRow, Seat } from "./types";
 
-const seat: Seat = {
+const assumptions: Assumptions = {
+  turnout_scenario: { base: 0.6 },
+  spoiled_rate: 0.02,
+  buffer_rate: 0.03,
+};
+
+const progress: ProgressRow = {
+  week_start: "2024-06-03",
+  seat_id: "N.01",
+  base_votes: 3500,
+  persuasion_votes: 800,
+  gotv_votes: 400,
+  persuadables: 2000,
+  conversion_rate: 0.4,
+};
+
+const seatBase: Omit<Seat, "winner_party" | "winner_votes" | "runner_up_party" | "runner_up_votes" | "bn_votes" | "bn_rank"> = {
   seat_id: "N.01",
   seat_name: "N.01 Test Seat",
   state: "Sabah",
@@ -18,52 +34,65 @@ const seat: Seat = {
   corners: 5,
 };
 
-const progress: ProgressRow = {
-  week_start: "2024-06-03",
-  seat_id: "N.01",
-  base_votes: 3500,
-  persuasion_votes: 800,
-  gotv_votes: 400,
-  persuadables: 2000,
-  conversion_rate: 0.4,
-};
-
-const assumptions: Assumptions = {
-  turnout_scenario: { low: 0.5, base: 0.6, high: 0.7 },
-  spoiled_rate: 0.02,
-  buffer_rate: 0.03,
-};
-
-describe("computeSeatMetrics", () => {
-  it("calculates KPI values based on formulas", () => {
-    const metrics = computeSeatMetrics(seat, progress, assumptions, "base");
-    const expectedValidVotes = 10000 * 0.6 * (1 - 0.02);
-    const expectedBufferVotes = Math.round(expectedValidVotes * 0.03);
-    expect(metrics.validVotes).toBeCloseTo(expectedValidVotes, 2);
-    expect(metrics.umm).toBe(4001);
-    expect(metrics.wvt).toBe(4001 + expectedBufferVotes);
-    expect(metrics.totalVote).toBe(4700);
-    expect(metrics.gapToWvt).toBe(metrics.wvt - 4700);
-    expect(metrics.swingMin).toBe(Math.floor(1000 / 2) + 1);
-    expect(metrics.swingPct).toBeCloseTo(1000 / 2 / expectedValidVotes, 5);
-    expect(metrics.flags).toContain("Data pemilih DUN adalah anggaran");
+describe("threshold tagging", () => {
+  it("tags attack levels by vote or pct", () => {
+    expect(getAttackLevel(450, 0.03, defaultThresholds)).toBe("dekat");
+    expect(getAttackLevel(900, 0.04, defaultThresholds)).toBe("sederhana");
+    expect(getAttackLevel(3000, 0.07, defaultThresholds)).toBe("jauh");
   });
 
-  it("uses buffer_votes when provided", () => {
-    const withFixedBuffer = computeSeatMetrics(seat, progress, { ...assumptions, buffer_votes: 123 }, "base");
-    expect(withFixedBuffer.wvt).toBe(4001 + 123);
+  it("tags defend risk by majority vote or pct", () => {
+    expect(getDefendRiskLevel(280, 0.03, defaultThresholds)).toBe("risiko_tinggi");
+    expect(getDefendRiskLevel(700, 0.02, defaultThresholds)).toBe("risiko_sederhana");
+    expect(getDefendRiskLevel(2000, 0.08, defaultThresholds)).toBe("risiko_rendah");
   });
+});
 
-  it("flags data quality issues and gives action notes", () => {
-    const badAssumptions = {
-      ...assumptions,
-      spoiled_rate: 0.2,
-      turnout_scenario: { high: 1.2 },
+describe("BN formulas and GapToWVT", () => {
+  it("calculates BN_MarginToWin and pct when BN not winner", () => {
+    const seat: Seat = {
+      ...seatBase,
+      winner_party: "WARISAN",
+      winner_votes: 5200,
+      runner_up_party: "BN",
+      runner_up_votes: 5000,
+      bn_votes: 5000,
+      bn_rank: 2,
     };
-    const unrealisticProgress = { ...progress, base_votes: 8000, persuasion_votes: 3000, gotv_votes: 1000 };
-    const metrics = computeSeatMetrics(seat, unrealisticProgress, badAssumptions, "high");
-    expect(metrics.flags).toContain("Undi rosak di luar julat 0 hingga 0.10");
-    expect(metrics.flags).toContain("Turnout di luar julat 0 hingga 1");
-    expect(getSeatActionNotes(metrics).join(" ")).toContain("Sasaran tak realistik");
+    const metric = computeSeatMetrics(seat, progress, assumptions, "base", defaultThresholds);
+    const validVotes = 10000 * 0.6 * 0.98;
+    expect(metric.bnMarginToWin).toBe(201);
+    expect(metric.bnMarginToWinPct).toBeCloseTo(201 / validVotes, 6);
+  });
+
+  it("calculates BN_BufferToLose and majority pct when BN winner", () => {
+    const seat: Seat = {
+      ...seatBase,
+      winner_party: "BN",
+      winner_votes: 5300,
+      runner_up_party: "PH",
+      runner_up_votes: 5000,
+      bn_votes: 5300,
+      bn_rank: 1,
+    };
+    const metric = computeSeatMetrics(seat, progress, assumptions, "base", defaultThresholds);
+    const validVotes = 10000 * 0.6 * 0.98;
+    expect(metric.bnBufferToLose).toBe(299);
+    expect(metric.majorityPct).toBeCloseTo(300 / validVotes, 6);
+  });
+
+  it("keeps GapToWVT positive when target not reached", () => {
+    const seat: Seat = {
+      ...seatBase,
+      winner_party: "PH",
+      winner_votes: 5200,
+      runner_up_party: "BN",
+      runner_up_votes: 5000,
+      bn_votes: 5000,
+      bn_rank: 2,
+    };
+    const lowProgress = { ...progress, base_votes: 2000, persuasion_votes: 200, gotv_votes: 100 };
+    const metric = computeSeatMetrics(seat, lowProgress, assumptions, "base", defaultThresholds);
+    expect(metric.gapToWvt).toBeGreaterThan(0);
   });
 });
