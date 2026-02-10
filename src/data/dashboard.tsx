@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 import type { Assumptions, Grain, Seat, SeatMetrics, ThresholdConfig } from "./types";
 import { buildSabahSeats, loadAssumptions, loadDunSabah, loadParlimenSabah, loadProgress, loadPrnBaseline, loadThresholds } from "./loader";
 import { computeSeatMetrics, defaultThresholds, getLatestProgress } from "../lib/kpi";
+import { validateWinnersRows } from "./baseline";
 
 const defaultAssumptions: Assumptions = {
   turnout_scenario: { low: 0.55, base: 0.65, high: 0.75 },
@@ -28,6 +29,8 @@ const DashboardContext = createContext<{
   setGrain: React.Dispatch<React.SetStateAction<Grain>>;
   parlimenOptions: { code: string; name: string }[];
   dunOptions: { code: string; name: string }[];
+  dataWarnings: string[];
+  dataSummary: { sourceFile: string; totalDun: number; bnWins: number; nonBnWins: number };
 }>({
   isLoading: true,
   error: null,
@@ -44,6 +47,8 @@ const DashboardContext = createContext<{
   setGrain: () => undefined,
   parlimenOptions: [],
   dunOptions: [],
+  dataWarnings: [],
+  dataSummary: { sourceFile: "prn_sabah_2025_winners.csv", totalDun: 0, bnWins: 0, nonBnWins: 0 },
 });
 
 export const DashboardProvider = ({ children }: { children: React.ReactNode }) => {
@@ -53,6 +58,8 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
   const [assumptions, setAssumptions] = useState<Assumptions>(defaultAssumptions);
   const [thresholds, setThresholds] = useState<ThresholdConfig>(defaultThresholds);
   const [metrics, setMetrics] = useState<SeatMetrics[]>([]);
+  const [dataWarnings, setDataWarnings] = useState<string[]>([]);
+  const [dataSummary, setDataSummary] = useState({ sourceFile: "prn_sabah_2025_winners.csv", totalDun: 0, bnWins: 0, nonBnWins: 0 });
   const [filters, setFilters] = useState(defaultFilters);
   const [grain, setGrain] = useState<Grain>("parlimen");
 
@@ -83,6 +90,16 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
           loadThresholds(),
         ]);
         const loadedSeats = buildSabahSeats(parlimenRows, dunRows, baselineRows);
+        const validation = validateWinnersRows(
+          baselineRows.map((row) => ({
+            dun_code: row.dun_code,
+            dun_name: row.dun_name,
+            winner_name: "",
+            winner_party: row.winner_party,
+            winner_votes: row.winner_votes,
+          })),
+          "prn_sabah_2025_winners.csv"
+        );
         const latestProgress = getLatestProgress(progressRows);
         const saved = localStorage.getItem(THRESHOLDS_KEY);
         const activeThresholds = saved ? (JSON.parse(saved) as ThresholdConfig) : loadedThresholds;
@@ -120,6 +137,13 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
         setAssumptions(loadedAssumptions);
         setThresholds(activeThresholds);
         setMetrics([...parlimenMetrics, ...dunMetrics]);
+        setDataWarnings(validation.warnings);
+        setDataSummary({
+          sourceFile: validation.sourceFile,
+          totalDun: validation.totalDun,
+          bnWins: validation.bnWins,
+          nonBnWins: validation.nonBnWins,
+        });
         setError(null);
       } catch {
         setError("Gagal memuatkan data Sabah. Sila semak fail data.");
@@ -191,6 +215,8 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
         setGrain,
         parlimenOptions,
         dunOptions,
+        dataWarnings,
+        dataSummary,
       }}
     >
       {children}

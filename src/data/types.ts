@@ -23,6 +23,15 @@ export type PrnBaselineRow = {
   bn_votes: number;
   bn_rank: number;
   majority: number;
+  data_flags?: string[];
+};
+
+export type WinnersRow = {
+  dun_code: string;
+  dun_name: string;
+  winner_name: string;
+  winner_party: string;
+  winner_votes: number;
 };
 
 export type Grain = "parlimen" | "dun";

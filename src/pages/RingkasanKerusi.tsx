@@ -15,10 +15,12 @@ const toneFromMetric = (risk: string | null, target: string | null) => {
 };
 
 const RingkasanKerusi = () => {
-  const { metrics, filteredMetrics, setGrain, grain } = useDashboard();
+  const { metrics, filteredMetrics, setGrain, grain, dataWarnings, dataSummary } = useDashboard();
   const dunMetrics = useMemo(() => metrics.filter((m) => m.seat.grain === "dun"), [metrics]);
-  const defendSeats = useMemo(() => dunMetrics.filter((m) => m.seat.bn_rank === 1), [dunMetrics]);
+  const bnSeatsWon = useMemo(() => dunMetrics.filter((m) => m.seat.winner_party === "BN"), [dunMetrics]);
+  const defendSeats = bnSeatsWon;
   const attackSeats = useMemo(() => dunMetrics.filter((m) => m.seat.bn_rank !== 1), [dunMetrics]);
+  const targetSeats = Math.max(0, 73 - defendSeats.length);
   const topNear = useMemo(() => attackSeats.filter((m) => m.targetLevel === "dekat").sort((a, b) => a.bnMarginToWin - b.bnMarginToWin).slice(0, 10), [attackSeats]);
   const topRisk = useMemo(() => [...defendSeats].sort((a, b) => a.bnBufferToLose - b.bnBufferToLose).slice(0, 10), [defendSeats]);
 
@@ -34,9 +36,17 @@ const RingkasanKerusi = () => {
       </div>
 
       <div className="grid grid-kpi">
-        <KpiCard label="BN Seats Won" value={formatNumber(defendSeats.length)} tooltip={{ maksud: "Bilangan DUN yang BN menang.", formula: "kira(bn_rank = 1)", contoh: "Jika 40 DUN menang, nilai = 40" }} />
+        <KpiCard label="BN Seats Won" value={formatNumber(bnSeatsWon.length)} tooltip={{ maksud: "Bilangan DUN yang BN menang secara ketat.", formula: "kira(winner_party = 'BN')", contoh: "Jika 6 DUN BN menang, nilai = 6" }} />
         <KpiCard label="Defend Seats" value={formatNumber(defendSeats.length)} tooltip={{ maksud: "Kerusi yang perlu dipertahankan BN.", formula: "Sama seperti BN Seats Won", contoh: "25 kerusi menang = 25 defend" }} />
-        <KpiCard label="Target Seats" value={formatNumber(attackSeats.length)} tooltip={{ maksud: "Kerusi BN belum menang dan perlu diserang.", formula: "kira(bn_rank != 1)", contoh: "12 kerusi belum menang = 12 target" }} />
+        <KpiCard label="Target Seats" value={formatNumber(targetSeats)} tooltip={{ maksud: "Kerusi BN belum menang dan perlu diserang.", formula: "73 - Defend Seats", contoh: "73 - 6 = 67" }} />
+      </div>
+
+      <div className="card">
+        <p className="muted">Sumber data: {dataSummary.sourceFile}</p>
+        <p className="muted">Total DUN: {formatNumber(dataSummary.totalDun)} · BN Wins: {formatNumber(dataSummary.bnWins)} · Non-BN Wins: {formatNumber(dataSummary.nonBnWins)}</p>
+        {dataWarnings.map((warning) => (
+          <p key={warning} style={{ color: "#f59e0b", fontWeight: 600 }}>{warning}</p>
+        ))}
       </div>
 
       <div className="grid two-col">
