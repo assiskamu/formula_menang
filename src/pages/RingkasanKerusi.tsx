@@ -190,12 +190,18 @@ const RingkasanKerusi = () => {
   const viewLabel = grain === "dun" ? "DUN" : "Parlimen";
   const modeLabel = mode === "ringkas" ? "Ringkas" : "Analitik";
   const turnoutLabel = scenarioLabel[filters.turnoutScenario] ?? filters.turnoutScenario;
+  const totalDun = dataSummary?.totalDun ?? 0;
+  const lengkapCount = dunMetrics.filter((m) => confidenceMeta(m).label === "Lengkap").length;
+  const calonCount = dunMetrics.filter((m) => m.seat?.candidates_available).length;
+  const lengkapPct = totalDun > 0 ? Math.round((lengkapCount / totalDun) * 100) : 0;
 
   return (
     <section className="stack">
       <div className="card">
         <div className="title-row"><h2>Ringkasan BN War Room</h2><button type="button" onClick={() => setShowFocusPanel((p) => !p)}>Kerusi Fokus ⭐ ({focusMetrics.length})</button></div>
-        <p className="data-inline-banner">Data: {formatNumber(dataSummary.totalDun)} DUN • Lengkap: {formatNumber(dataSummary.totalDun ? Math.round((dataSummary.totalDun ? (dunMetrics.filter((m) => confidenceMeta(m).label === "Lengkap").length / dataSummary.totalDun : 0) * 100 : 0)))}% • Calon: {formatNumber(dunMetrics.filter((m) => m.seat.candidates_available).length)} • BN: {formatNumber(dataSummary.bnWins)}</p>
+        <p className="data-inline-banner">
+          Data: {formatNumber(totalDun)} DUN • Lengkap: {formatNumber(lengkapCount)} ({lengkapPct}%) • Calon: {formatNumber(calonCount)} • BN: {formatNumber(dataSummary?.bnWins ?? 0)}
+        </p>
         <div className="segmented" style={{ marginTop: 10 }}><button type="button" className={grain === "parlimen" ? "active" : ""} onClick={() => setGrain("parlimen")}>Parlimen</button><button type="button" className={grain === "dun" ? "active" : ""} onClick={() => setGrain("dun")}>DUN</button></div>
         <div className="segmented" style={{ marginTop: 8 }}><button type="button" className={mode === "ringkas" ? "active" : ""} onClick={() => setMode("ringkas")}>Mode Ringkas</button><button type="button" className={mode === "analitik" ? "active" : ""} onClick={() => setMode("analitik")}>Mode Analitik</button></div>
         <p className="context-label">Paparan: {viewLabel} • {modeLabel} • Turnout {turnoutLabel}</p>
