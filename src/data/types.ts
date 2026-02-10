@@ -1,8 +1,29 @@
+export type ParlimenRow = {
+  parlimen_code: string;
+  parlimen_name: string;
+  jumlah_pemilih: number;
+};
+
+export type DunRow = {
+  parlimen_code: string;
+  parlimen_name: string;
+  dun_code: string;
+  dun_name: string;
+};
+
+export type Grain = "parlimen" | "dun";
+
 export type Seat = {
   seat_id: string;
   seat_name: string;
   state: string;
+  grain: Grain;
+  parlimen_code: string;
+  parlimen_name: string;
+  dun_code?: string;
+  dun_name?: string;
   registered_voters: number;
+  registered_voters_estimated: boolean;
   last_opponent_top_votes: number;
   last_majority: number;
   corners: number;

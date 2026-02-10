@@ -50,6 +50,9 @@ export const computeSeatMetrics = (
   if (wvt > validVotes) {
     flags.push("WVT > ValidVotes");
   }
+  if (seat.registered_voters_estimated) {
+    flags.push("Data pemilih DUN: ESTIMATE");
+  }
 
   return {
     seat,
