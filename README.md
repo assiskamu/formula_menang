@@ -46,12 +46,11 @@ Setiap kali anda mengubah data, muat semula aplikasi untuk melihat kemas kini.
 
 ## GitHub Pages
 
-Vite dikonfigurasi menggunakan `base` mengikut nama repo dalam `package.json`. Jika nama repo berubah, tetapkan pemboleh ubah persekitaran `VITE_BASE_PATH` semasa build.
+Aplikasi dibina dengan `base` tetap: `/formula_menang/` supaya serasi dengan GitHub Pages untuk repo ini.
 
-Contoh:
+Workflow GitHub Actions `Deploy to GitHub Pages` akan bina `dist/` dan deploy automatik pada push ke `main`.
 
-```bash
-VITE_BASE_PATH=/nama-repo/ npm run build
-```
+Selepas deployment berjaya, URL dashboard boleh didapati di:
 
-Workflow GitHub Actions sudah disediakan untuk deploy ke GitHub Pages pada push ke `main`.
+- **Settings → Pages** dalam repo ini, atau
+- URL standard: `https://<username>.github.io/formula_menang/`.
