@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { NavLink, Route, Routes } from "react-router-dom";
 import { DashboardProvider, useDashboard } from "./data/dashboard";
 import RingkasanKerusi from "./pages/RingkasanKerusi";
@@ -7,6 +7,9 @@ import OperasiGotv from "./pages/OperasiGotv";
 import BantuanFormula from "./pages/BantuanFormula";
 import PeneranganIstilah from "./pages/PeneranganIstilah";
 import KemasKiniData from "./pages/KemasKiniData";
+import { actionTagGuides, type ActionTag } from "./data/actionTags";
+
+const actionTags: ActionTag[] = ["GOTV", "PERSUASION", "BASE"];
 
 const scenarioLabel: Record<string, string> = { low: "Rendah", base: "Sederhana", high: "Tinggi" };
 
@@ -58,8 +61,82 @@ const TetapanThreshold = () => {
 
 const Filters = () => {
   const { filters, setFilters, parlimenOptions, dunOptions, assumptions } = useDashboard();
+  const [parlimenQuery, setParlimenQuery] = useState("");
+  const [dunQuery, setDunQuery] = useState("");
+  const selectedParlimenLabel = useMemo(
+    () => parlimenOptions.find((item) => item.code === filters.parlimen)?.name ?? "",
+    [filters.parlimen, parlimenOptions],
+  );
+  const selectedDunLabel = useMemo(
+    () => dunOptions.find((item) => item.code === filters.dun)?.name ?? "",
+    [dunOptions, filters.dun],
+  );
+
+  useEffect(() => {
+    setParlimenQuery(filters.parlimen ? `${filters.parlimen} ${selectedParlimenLabel}` : "");
+  }, [filters.parlimen, selectedParlimenLabel]);
+
+  useEffect(() => {
+    setDunQuery(filters.dun ? `${filters.dun} ${selectedDunLabel}` : "");
+  }, [filters.dun, selectedDunLabel]);
+
+  const resetFilters = () => {
+    setFilters((prev) => ({ ...prev, parlimen: "", dun: "" }));
+    setParlimenQuery("");
+    setDunQuery("");
+  };
+
+  const updateParlimenFromSearch = (query: string) => {
+    const normalized = query.trim().toLowerCase();
+    const matched = parlimenOptions.find((item) => `${item.code} ${item.name}`.toLowerCase() === normalized || item.code.toLowerCase() === normalized);
+    setFilters((prev) => ({ ...prev, parlimen: matched?.code ?? "", dun: "" }));
+  };
+
+  const updateDunFromSearch = (query: string) => {
+    const normalized = query.trim().toLowerCase();
+    const matched = dunOptions.find((item) => `${item.code} ${item.name}`.toLowerCase() === normalized || item.code.toLowerCase() === normalized);
+    setFilters((prev) => ({ ...prev, dun: matched?.code ?? "" }));
+  };
+
   return (
-    <div className="filters">
+    <>
+    <div className="mobile-top-bar" role="region" aria-label="Navigasi pantas mudah alih">
+      <label>
+        <span className="label-title">Parlimen</span>
+        <input
+          list="parlimen-mobile-options"
+          value={parlimenQuery}
+          onChange={(event) => { setParlimenQuery(event.target.value); updateParlimenFromSearch(event.target.value); }}
+          placeholder="Cari parlimen"
+          aria-label="Cari parlimen"
+        />
+        <datalist id="parlimen-mobile-options">
+          {parlimenOptions.map((parlimen) => <option key={parlimen.code} value={`${parlimen.code} ${parlimen.name}`} />)}
+        </datalist>
+      </label>
+
+      <label>
+        <span className="label-title">DUN</span>
+        <input
+          list="dun-mobile-options"
+          value={dunQuery}
+          onChange={(event) => { setDunQuery(event.target.value); updateDunFromSearch(event.target.value); }}
+          placeholder={dunOptions.length === 0 ? "Pilih parlimen dulu" : "Cari DUN"}
+          aria-label="Cari DUN"
+          disabled={dunOptions.length === 0}
+        />
+        <datalist id="dun-mobile-options">
+          {dunOptions.map((dun) => <option key={dun.code} value={`${dun.code} ${dun.name}`} />)}
+        </datalist>
+      </label>
+
+      <div className="mobile-top-actions">
+        <button type="button" onClick={resetFilters}>Reset</button>
+        <button type="button" className="secondary" onClick={() => window.dispatchEvent(new CustomEvent("open-istilah-sheet"))}>Istilah</button>
+      </div>
+    </div>
+
+    <div className="filters desktop-filters">
       <label>Parlimen (Sabah)
         <select value={filters.parlimen} onChange={(event) => setFilters((prev) => ({ ...prev, parlimen: event.target.value, dun: "" }))}>
           <option value="">Semua Parlimen</option>
@@ -78,6 +155,7 @@ const Filters = () => {
         </select>
       </label>
     </div>
+    </>
   );
 };
 
@@ -116,6 +194,14 @@ const CaraGunaModal = () => {
 
 const Layout = () => {
   const { isLoading, error } = useDashboard();
+  const [showGlossarySheet, setShowGlossarySheet] = useState(false);
+
+  useEffect(() => {
+    const handler = () => setShowGlossarySheet(true);
+    window.addEventListener("open-istilah-sheet", handler);
+    return () => window.removeEventListener("open-istilah-sheet", handler);
+  }, []);
+
   if (isLoading) return <div className="page">Memuatkan data...</div>;
   if (error) return <div className="page">{error}</div>;
   return (
@@ -148,6 +234,29 @@ const Layout = () => {
           <Route path="/kemas-kini" element={<KemasKiniData />} />
         </Routes>
       </main>
+
+      {showGlossarySheet && (
+        <div className="bottom-sheet-overlay" role="dialog" aria-modal="true" aria-label="Istilah penting" onClick={() => setShowGlossarySheet(false)}>
+          <div className="bottom-sheet" onClick={(event) => event.stopPropagation()}>
+            <div className="bottom-sheet-header">
+              <h2>Istilah Pantas War Room</h2>
+              <button type="button" onClick={() => setShowGlossarySheet(false)} aria-label="Tutup istilah">Tutup</button>
+            </div>
+            <p className="muted">Rujukan ringkas untuk tag tindakan utama.</p>
+            <div className="sheet-tag-grid">
+              {actionTags.map((tag) => (
+                <article key={tag} className="sheet-tag-card">
+                  <h3>{tag}</h3>
+                  <p>{actionTagGuides[tag].maksud}</p>
+                  <ul>
+                    {actionTagGuides[tag].bilaGuna.map((point) => <li key={point}>{point}</li>)}
+                  </ul>
+                </article>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
