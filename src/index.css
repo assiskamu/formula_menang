@@ -90,9 +90,9 @@ th { white-space: nowrap; }
   letter-spacing: 0.02em;
   border: 1px solid transparent;
 }
-.action-gotv { background: #dbeafe; color: #1e3a8a; border-color: #93c5fd; }
+.action-gotv { background: #dcfce7; color: #166534; border-color: #86efac; }
 .action-persuasion { background: #ffedd5; color: #9a3412; border-color: #fdba74; }
-.action-base { background: #e0e7ff; color: #312e81; border-color: #a5b4fc; }
+.action-base { background: #dbeafe; color: #1e3a8a; border-color: #93c5fd; }
 .action-neutral { background: #e5e7eb; color: #374151; border-color: #d1d5db; }
 
 .table-legend {
@@ -254,9 +254,36 @@ th { white-space: nowrap; }
 .modal-backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); display: grid; place-items: center; padding: 16px; z-index: 100; }
 .modal-card { width: min(560px, 100%); }
 
+.data-inline-banner {
+  margin: 10px 0 0;
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #dbeafe;
+  color: #1e3a8a;
+  font-size: 0.86rem;
+}
+
+.quick-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 8px 0 10px;
+}
+
+.quick-chips button { border-radius: 999px; font-size: 0.8rem; min-height: 34px; padding: 6px 10px; }
+.quick-chips .chip-active { background: #1d4ed8; color: #fff; border-color: #1e40af; }
+.sticky-col { position: sticky; left: 0; background: #fff; z-index: 2; }
+thead .sticky-col { z-index: 3; }
+.interactive-row:hover td { background: #f8fbff; }
+.interactive-row:active td { background: #eef2ff; }
+.metric-stack { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.sticky-copy { position: sticky; bottom: 0; width: 100%; background: #1d4ed8; color: #fff; border-color: #1e40af; }
+
 @media (max-width: 767px) {
   .app { padding: 12px; }
-  .desktop-filters, .desktop-table-view, .desktop-priority-grid, .desktop-detail-panel { display: none; }
+  .desktop-filters, .desktop-priority-grid, .desktop-detail-panel { display: none; }
+  .desktop-table-view table { display: none; }
   .mobile-top-bar, .mobile-card-list, .mobile-priority-tabs { display: grid; }
   .bottom-sheet-overlay { display: flex; }
   .filters { flex-direction: column; }
@@ -279,15 +306,15 @@ th { white-space: nowrap; }
   }
 }
 .coverage-banner {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 10px;
+  display: block;
 }
 
 .coverage-banner strong {
-  padding: 12px 14px;
+  display: inline-block;
+  width: 100%;
+  padding: 10px 14px;
   border-radius: 12px;
-  background: linear-gradient(90deg, #dbeafe, #e0f2fe);
+  background: #eff6ff;
   border: 1px solid #93c5fd;
   color: #1e3a8a;
 }

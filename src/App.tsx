@@ -161,11 +161,10 @@ const Filters = () => {
 
 
 const DataCoverageBanner = () => {
-  const { detailCoverage, candidateCoverage } = useDashboard();
+  const { detailCoverage, candidateCoverage, dataSummary } = useDashboard();
   return (
-    <div className="coverage-banner" role="status">
-      <strong>Data lengkap (turnout/berdaftar/majoriti) tersedia untuk {detailCoverage}/73 DUN</strong>
-      <strong>Data pecahan calon tersedia untuk {candidateCoverage}/73 DUN</strong>
+    <div className="coverage-banner" role="status" aria-live="polite">
+      <strong>Data: {dataSummary.totalDun} DUN • Lengkap: {detailCoverage} • Calon: {candidateCoverage} • BN: {dataSummary.bnWins}</strong>
     </div>
   );
 };
