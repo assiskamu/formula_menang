@@ -6,6 +6,7 @@ import FunnelKempen from "./pages/FunnelKempen";
 import OperasiGotv from "./pages/OperasiGotv";
 import BantuanFormula from "./pages/BantuanFormula";
 import PeneranganIstilah from "./pages/PeneranganIstilah";
+import KemasKiniData from "./pages/KemasKiniData";
 
 const scenarioLabel: Record<string, string> = { low: "Rendah", base: "Sederhana", high: "Tinggi" };
 
@@ -131,6 +132,7 @@ const Layout = () => {
           <NavLink to="/gotv">Operasi GOTV</NavLink>
           <NavLink to="/bantuan">Bantuan & Maksud Angka</NavLink>
           <NavLink to="/penerangan">Penerangan Istilah</NavLink>
+          <NavLink to="/kemas-kini">Kemas Kini Data</NavLink>
         </nav>
       </header>
       <DataCoverageBanner />
@@ -143,6 +145,7 @@ const Layout = () => {
           <Route path="/gotv" element={<OperasiGotv />} />
           <Route path="/bantuan" element={<BantuanFormula />} />
           <Route path="/penerangan" element={<PeneranganIstilah />} />
+          <Route path="/kemas-kini" element={<KemasKiniData />} />
         </Routes>
       </main>
     </div>

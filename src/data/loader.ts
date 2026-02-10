@@ -8,6 +8,7 @@ import type {
   SeatDetailsRow,
   ThresholdConfig,
   WinnersRow,
+  LocalOverrides,
 } from "./types";
 import { aggregateCandidateRows } from "./seatEnrichment";
 
@@ -72,6 +73,7 @@ export const loadWinnersMaster = async () => {
 
 export const loadSeatDetails = async () => {
   const response = await fetch(`${import.meta.env.BASE_URL}data/seat_details_enriched_v3.csv`);
+  if (!response.ok) return [];
   const text = await response.text();
   return parseCsv(text).map(
     (record) =>
@@ -89,6 +91,7 @@ export const loadSeatDetails = async () => {
 
 export const loadCandidatesLong = async () => {
   const response = await fetch(`${import.meta.env.BASE_URL}data/seat_details_enriched_with_candidates_v2.csv`);
+  if (!response.ok) return [];
   const text = await response.text();
   return parseCsv(text)
     .filter((record) => record.candidate_name || record.party || record.votes)
@@ -113,7 +116,8 @@ export const buildSabahSeats = (
   dunRows: DunRow[],
   winnersRows: WinnersRow[],
   seatDetailRows: SeatDetailsRow[],
-  candidateRows: CandidateRow[]
+  candidateRows: CandidateRow[],
+  overrides?: LocalOverrides
 ): { seats: Seat[]; candidateByDun: Map<string, CandidateRow[]>; detailCoverage: number; candidateCoverage: number; duplicateDetails: string[] } => {
   const dunsByParlimen = new Map<string, DunRow[]>();
   dunRows.forEach((row) => {
@@ -129,11 +133,52 @@ export const buildSabahSeats = (
     if (!detailsByDun.has(row.dun_code)) detailsByDun.set(row.dun_code, row);
   });
   const duplicateDetails = [...detailCounts.entries()].filter(([, count]) => count > 1).map(([code]) => code);
-
-  const { groupedCandidates, aggregates } = aggregateCandidateRows(candidateRows);
-
   const parlimenByCode = new Map(parlimenRows.map((row) => [row.parlimen_code, row]));
   const dunMetaByCode = new Map(dunRows.map((row) => [row.dun_code, row]));
+
+  const mergedSeatDetails = new Map(detailsByDun);
+  Object.entries(overrides?.seatDetails ?? {}).forEach(([dunCode, local]) => {
+    const existing = mergedSeatDetails.get(dunCode);
+    if (!existing) {
+      mergedSeatDetails.set(dunCode, {
+        dun_code: dunCode,
+        dun_name: dunMetaByCode.get(dunCode)?.dun_name ?? "",
+        registered_voters: toNumber(local.registered_voters),
+        total_votes_cast: toNumber(local.total_votes_cast),
+        turnout_pct: toNumber(local.turnout_pct),
+        majority_votes: toNumber(local.majority_votes),
+        source: "local",
+      });
+      return;
+    }
+    mergedSeatDetails.set(dunCode, {
+      ...existing,
+      registered_voters: local.registered_voters === undefined ? existing.registered_voters : toNumber(local.registered_voters),
+      total_votes_cast: local.total_votes_cast === undefined ? existing.total_votes_cast : toNumber(local.total_votes_cast),
+      turnout_pct: local.turnout_pct === undefined ? existing.turnout_pct : toNumber(local.turnout_pct),
+      majority_votes: local.majority_votes === undefined ? existing.majority_votes : toNumber(local.majority_votes),
+      source: "local",
+    });
+  });
+
+  const mergedCandidatesByDun = new Map<string, CandidateRow[]>();
+  const baseCandidates = aggregateCandidateRows(candidateRows).groupedCandidates;
+  baseCandidates.forEach((rows, dunCode) => {
+    mergedCandidatesByDun.set(dunCode, rows);
+  });
+  Object.entries(overrides?.candidates ?? {}).forEach(([dunCode, rows]) => {
+    const dunName = dunMetaByCode.get(dunCode)?.dun_name ?? "";
+    const normalized = rows.map((row) => ({
+      dun_code: dunCode,
+      dun_name: dunName,
+      candidate_name: row.candidate_name,
+      party: row.party,
+      votes: toNumber(row.votes),
+      vote_share_pct: toNumber(row.vote_share_pct),
+    }));
+    mergedCandidatesByDun.set(dunCode, normalized);
+  });
+  const { groupedCandidates, aggregates } = aggregateCandidateRows([...mergedCandidatesByDun.values()].flat());
 
   const dunSeats: Seat[] = winnersRows.map((winner) => {
     const mappedDun = dunMetaByCode.get(winner.dun_code);
@@ -141,7 +186,7 @@ export const buildSabahSeats = (
     const dunCount = mappedDun ? (dunsByParlimen.get(mappedDun.parlimen_code) ?? []).length : 0;
     const estimatedDunVoters = dunCount > 0 ? (parlimen?.jumlah_pemilih ?? 0) / dunCount : 0;
 
-    const detail = detailsByDun.get(winner.dun_code);
+    const detail = mergedSeatDetails.get(winner.dun_code);
     const candidateAgg = aggregates.get(winner.dun_code);
     const bnVotes = candidateAgg?.bn_votes ?? (winner.winner_party === "BN" ? winner.winner_votes : 0);
     const bnRank = candidateAgg?.bn_rank ?? (winner.winner_party === "BN" ? 1 : null);

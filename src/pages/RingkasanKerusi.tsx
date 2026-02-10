@@ -74,6 +74,17 @@ const RingkasanKerusi = () => {
 
   return (
     <section className="stack">
+      <details className="card">
+        <summary><strong>Cara Guna Dashboard (Ringkas)</strong></summary>
+        <ol>
+          <li>Pilih Parlimen atau DUN.</li>
+          <li>Tengok Ringkasan: BN Menang, Defend, dan Target.</li>
+          <li>Rujuk Top Risiko & Top Sasaran untuk susun keutamaan.</li>
+          <li>Klik DUN untuk lihat butiran & cadangan tindakan (GOTV/Persuasion/Base).</li>
+        </ol>
+        <p className="muted"><strong>Nota Data:</strong> 73 DUN sentiasa dipaparkan. Jika data calon tiada, dashboard guna keputusan pemenang sahaja. Anda boleh tambah data sendiri melalui tab "Kemas Kini Data".</p>
+      </details>
+
       <div className="card">
         <h2>Ringkasan BN War Room</h2>
         <p className="muted">Pantau kerusi defend & sasaran dengan tag risiko/prioriti yang boleh dilaras di panel Tetapan.</p>

@@ -65,3 +65,27 @@ Sumber runtime berada dalam `public/data/`:
 - `thresholds.json`
 
 Kemas kini data, semak paparan, kemudian jalankan ujian sebelum push.
+
+## Key-in data terus dari UI + Export/Import
+
+Gunakan tab **Kemas Kini Data** untuk masukkan data tanpa CSV:
+
+1. Pilih DUN (boleh cari kod/nama).
+2. Isi **Butiran Kerusi**: Registered Voters, Total Votes Cast, Turnout %, Majority.
+3. Isi **Undi Setiap Calon** (tambah/buang baris, auto kira % undi, auto kira majoriti).
+4. Simpan perubahan. Data disimpan ke `localStorage` browser (bukan server).
+
+Pilihan pengurusan data tempatan:
+
+- **Export Data (JSON)** untuk backup/share fail override.
+- **Import Data (JSON) [Merge]** untuk gabung data baharu dengan data sedia ada.
+- **Import Data (JSON) [Replace]** untuk ganti semua override tempatan.
+- **Reset local changes** untuk padam semua override tempatan.
+
+Keutamaan data runtime:
+
+1. Local overrides (`localStorage`) — paling tinggi.
+2. CSV enriched jika tersedia (`seat_details_enriched_v3.csv`, `seat_details_enriched_with_candidates_v2.csv`).
+3. Master winners (`prn_sabah_2025_winners.csv`) sebagai fallback.
+
+Senarai 73 DUN daripada `prn_sabah_2025_winners.csv` sentiasa dikekalkan.
