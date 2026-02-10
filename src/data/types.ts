@@ -11,6 +11,20 @@ export type DunRow = {
   dun_name: string;
 };
 
+export type PrnBaselineRow = {
+  dun_code: string;
+  dun_name: string;
+  parlimen_code: string;
+  corners: number;
+  winner_party: string;
+  winner_votes: number;
+  runner_up_party: string;
+  runner_up_votes: number;
+  bn_votes: number;
+  bn_rank: number;
+  majority: number;
+};
+
 export type Grain = "parlimen" | "dun";
 
 export type Seat = {
@@ -27,6 +41,12 @@ export type Seat = {
   last_opponent_top_votes: number;
   last_majority: number;
   corners: number;
+  winner_party: string;
+  winner_votes: number;
+  runner_up_party: string;
+  runner_up_votes: number;
+  bn_votes: number;
+  bn_rank: number;
 };
 
 export type ProgressRow = {
@@ -59,4 +79,9 @@ export type SeatMetrics = {
   swingPct: number;
   flags: string[];
   neededGotvToCloseGap: number;
+  bnMarginToWin: number;
+  bnBufferToLose: number;
+  bnStatusTag: string;
+  mainOpponentParty: string;
+  cadanganTindakan: string;
 };
