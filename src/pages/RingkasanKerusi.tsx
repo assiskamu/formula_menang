@@ -52,19 +52,14 @@ const actionTone = (action: string) => {
 
 const ActionTagInfo = ({ tag }: { tag: ActionTag }) => {
   const guide = actionTagGuides[tag];
-  const title = [
-    `${tag}`,
-    `Maksud: ${guide.maksud}`,
-    "Bila guna:",
-    ...guide.bilaGuna.map((item) => `• ${item}`),
-    "Contoh tindakan:",
-    ...guide.contohAksi.map((item) => `• ${item}`),
-  ].join("\n");
-
   return (
-    <span className="info-tooltip action-info" title={title} aria-label={`Info ${tag}`}>
-      ⓘ
-    </span>
+    <InfoTooltip
+      label={tag}
+      maksud={guide.maksud}
+      formula={`Bila guna: ${guide.bilaGuna.join("; ")}`}
+      contoh={guide.contohAksi.join("; ")}
+      className="action-info"
+    />
   );
 };
 
