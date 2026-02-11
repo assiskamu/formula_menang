@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useDashboard } from "../data/dashboard";
 
 type TooltipProps = {
   label: string;
@@ -27,6 +28,8 @@ const useMobile = () => {
 };
 
 const Tooltip = ({ label, maksud, formula, contoh, className = "" }: TooltipProps) => {
+  const { dashboardMode } = useDashboard();
+  const isBeginner = dashboardMode === "beginner";
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -65,7 +68,7 @@ const Tooltip = ({ label, maksud, formula, contoh, className = "" }: TooltipProp
               <button type="button" className="info-overlay-close" onClick={() => setOpen(false)}>Tutup</button>
             </div>
             <p><strong>Maksud:</strong> {maksud}</p>
-            {formula ? <p><strong>Formula:</strong> {formula}</p> : null}
+            {isBeginner ? null : formula ? <p><strong>Formula:</strong> {formula}</p> : null}
             {contoh ? <p><strong>Contoh:</strong> {contoh}</p> : null}
           </div>
         </div>,
@@ -81,12 +84,12 @@ const Tooltip = ({ label, maksud, formula, contoh, className = "" }: TooltipProp
       <div ref={panelRef} className="info-overlay-content" role="tooltip" style={{ top, left }}>
         <p><strong>{label}</strong></p>
         <p><strong>Maksud:</strong> {maksud}</p>
-        {formula ? <p><strong>Formula:</strong> {formula}</p> : null}
+        {isBeginner ? null : formula ? <p><strong>Formula:</strong> {formula}</p> : null}
         {contoh ? <p><strong>Contoh:</strong> {contoh}</p> : null}
       </div>,
       document.body,
     );
-  }, [contoh, formula, isMobile, label, maksud, open]);
+  }, [contoh, formula, isBeginner, isMobile, label, maksud, open]);
 
   return (
     <>
