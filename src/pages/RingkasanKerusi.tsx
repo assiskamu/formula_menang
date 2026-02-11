@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import ActionPanel from "../components/ActionPanel";
 import Badge from "../components/Badge";
@@ -13,9 +13,9 @@ import { scrollToSection } from "../utils/scrollToSection";
 
 const actionLabel = (value: string) => {
   const normalized = value.toLowerCase();
-  if (normalized.includes("gotv")) return "Keluar Mengundi";
-  if (normalized.includes("persuasion")) return "Yakinkan";
-  if (normalized.includes("base")) return "Kekalkan";
+  if (normalized.includes("gotv")) return "Pastikan Keluar Mengundi";
+  if (normalized.includes("persuasion")) return "Pujuk Atas Pagar";
+  if (normalized.includes("base")) return "Jaga Penyokong";
   return value;
 };
 
@@ -30,9 +30,14 @@ const RingkasanKerusi = () => {
   const { metrics, filteredMetrics, filters, setFilters, dashboardMode, dataWarnings } = useDashboard();
   const location = useLocation();
   const isBeginner = dashboardMode === "beginner";
+  const [selectedAction, setSelectedAction] = useState<string>("semua");
 
   const dunMetrics = useMemo(() => metrics.filter((metric) => metric.seat.grain === "dun"), [metrics]);
-  const visibleRows = useMemo(() => filteredMetrics.filter((metric) => metric.seat.grain === "dun"), [filteredMetrics]);
+  const visibleRows = useMemo(() => {
+    const rows = filteredMetrics.filter((metric) => metric.seat.grain === "dun");
+    if (selectedAction === "semua") return rows;
+    return rows.filter((metric) => actionLabel(metric.cadanganTindakan) === selectedAction);
+  }, [filteredMetrics, selectedAction]);
 
 
   useEffect(() => {
@@ -89,8 +94,22 @@ const RingkasanKerusi = () => {
     ];
   }, [dunMetrics, setFilters]);
 
+  const visibleBnWins = visibleRows.filter((metric) => metric.seat.winner_party === "BN").length;
+  const visibleTargets = visibleRows.filter((metric) => metric.seat.winner_party !== "BN").length;
+  const missingDataSeats = visibleRows.filter((metric) => !metric.seat.details_available || !metric.seat.candidates_available);
+  const topTarget = visibleRows
+    .filter((metric) => metric.seat.winner_party !== "BN")
+    .sort((a, b) => a.bnMarginToWin - b.bnMarginToWin)
+    .slice(0, 5);
+
   return (
     <section className="stack">
+      <div className="mobile-top-actions" aria-label="Quick jump langkah">
+        <button type="button" onClick={() => scrollToSection("kawasan-filter")}>Step 1</button>
+        <button type="button" onClick={() => scrollToSection("senarai-kerusi")}>Step 2</button>
+        <button type="button" onClick={() => scrollToSection("panel-tindakan")}>Step 3</button>
+      </div>
+
       {isBeginner ? (
         <HomeOnboarding
           onStepSelectArea={() => scrollToSection("kawasan-filter", "#parlimen-filter")}
@@ -105,15 +124,29 @@ const RingkasanKerusi = () => {
           <h2>{isBeginner ? "Senarai Kerusi" : "Ringkasan Kerusi"}</h2>
           <p className="muted">{visibleRows.length} kerusi dipaparkan berdasarkan filter semasa.</p>
         </div>
+        <p className="context-label">
+          Dashboard ini untuk kenal pasti kerusi BN yang perlu dipertahan dan kerusi sasaran paling hampir.
+          Anda akan dapat Top Risiko, Top Sasaran, dan cadangan tindakan ringkas.
+        </p>
         {dataWarnings.length > 0 ? <p className="context-label">Amaran data: {dataWarnings[0]}</p> : null}
         <div className="grid grid-kpi">
-          <KpiCard label="Jumlah Kerusi DUN" value={formatNumber(dunMetrics.length)} helper="Keseluruhan dataset" />
-          <KpiCard label="Kerusi BN Menang" value={formatNumber(dunMetrics.filter((metric) => metric.seat.winner_party === "BN").length)} helper="Perlu kekalkan" />
-          <KpiCard label="Kerusi Sasaran" value={formatNumber(dunMetrics.filter((metric) => metric.seat.winner_party !== "BN").length)} helper="Perlu yakinkan" />
+          <KpiCard label="Jumlah Kerusi DUN" value={formatNumber(visibleRows.length)} helper="Ikut filter semasa" />
+          <KpiCard label="Kerusi BN (Perlu Dipertahan)" value={formatNumber(visibleBnWins)} helper="Defend: kerusi BN" />
+          <KpiCard label="Kerusi Bukan BN (Sasaran)" value={formatNumber(visibleTargets)} helper="Target: kerusi bukan BN" />
+          <KpiCard label="Data Belum Lengkap" value={formatNumber(missingDataSeats.length)} helper="Tidak dikira untuk formula tertentu" />
         </div>
+        {topTarget.length === 0 ? (
+          <div className="empty-state">
+            <p><strong>Top Sasaran kosong.</strong> Tiada kerusi bukan BN dalam paparan semasa.</p>
+            <p>Sila tukar parlimen, reset filter DUN, atau pilih "Semua tindakan" untuk lihat kerusi sasaran.</p>
+            <button type="button" onClick={() => { setFilters((prev) => ({ ...prev, dun: "" })); setSelectedAction("semua"); }}>
+              Longgarkan penapis
+            </button>
+          </div>
+        ) : null}
       </section>
 
-      <ActionPanel metric={selectedMetric} />
+      <ActionPanel metric={selectedMetric} onActionPick={(action) => setSelectedAction(action)} />
 
       <section className="card" id="senarai-kerusi">
         <div className="title-row">
@@ -144,8 +177,8 @@ const RingkasanKerusi = () => {
                   </td>
                   <td>
                     {metric.seat.winner_party === "BN"
-                      ? `Buffer BN: ${formatNumber(metric.bnBufferToLose)} undi`
-                      : `Margin sasaran: ${formatNumber(metric.bnMarginToWin)} undi`}
+                      ? `Buffer BN (majoriti): ${formatNumber(metric.bnBufferToLose)} undi`
+                      : `Tambahan undi diperlukan: ${formatNumber(metric.bnMarginToWin)} undi`}
                   </td>
                   <td>{typeof metric.seat.turnout_pct === "number" ? formatPercent(metric.seat.turnout_pct / 100) : "Data kurang"}</td>
                   <td><span className="action-pill">{actionLabel(metric.cadanganTindakan)}</span></td>
@@ -161,7 +194,8 @@ const RingkasanKerusi = () => {
             <article key={metric.seat.seat_id} className="card seat-card">
               <h4>{metric.seat.seat_name}</h4>
               <Badge label={metric.seat.winner_party === "BN" ? "Defend" : "Sasaran"} tone={statusTone(metric)} />
-              <p>{metric.seat.winner_party === "BN" ? `Buffer BN: ${formatNumber(metric.bnBufferToLose)} undi` : `Margin sasaran: ${formatNumber(metric.bnMarginToWin)} undi`}</p>
+              {!metric.seat.details_available || !metric.seat.candidates_available ? <Badge label="Data belum lengkap" tone="neutral" /> : null}
+              <p>{metric.seat.winner_party === "BN" ? `Buffer BN (majoriti): ${formatNumber(metric.bnBufferToLose)} undi` : `Tambahan undi diperlukan: ${formatNumber(metric.bnMarginToWin)} undi`}</p>
               <p>Turnout: {typeof metric.seat.turnout_pct === "number" ? formatPercent(metric.seat.turnout_pct / 100) : "Data kurang"}</p>
               <p><strong>Tindakan:</strong> {actionLabel(metric.cadanganTindakan)}</p>
               <button type="button" onClick={() => { setFilters((prev) => ({ ...prev, dun: metric.seat.dun_code ?? "" })); scrollToSection("butiran-kerusi"); }}>Buka Butiran</button>
@@ -176,6 +210,7 @@ const RingkasanKerusi = () => {
           <div className="detail-stats">
             <p><strong>Kerusi:</strong> {selectedMetric.seat.seat_name}</p>
             <p><strong>Status:</strong> {selectedMetric.seat.winner_party === "BN" ? "BN pegang kerusi" : "Kerusi sasaran BN"}</p>
+            {!selectedMetric.seat.details_available || !selectedMetric.seat.candidates_available ? <p><Badge label="Data belum lengkap" tone="neutral" /></p> : null}
             <p><strong>Majoriti:</strong> {formatNumber(selectedMetric.seat.majority_votes ?? selectedMetric.seat.last_majority ?? 0)} undi</p>
             <p><strong>Turnout:</strong> {typeof selectedMetric.seat.turnout_pct === "number" ? formatPercent(selectedMetric.seat.turnout_pct / 100) : "Data kurang"}</p>
             <p><strong>Saranan Utama:</strong> {actionLabel(selectedMetric.cadanganTindakan)}</p>
@@ -189,6 +224,19 @@ const RingkasanKerusi = () => {
         <section className="card" id="bantuan-lanjutan">
           <h3>Bantuan (Mode Lanjutan)</h3>
           <p className="muted">Akses modul lanjutan melalui menu: Perjalanan Undi, Pelan Hari Mengundi, Bantuan & Maksud Angka, dan Penerangan Istilah penuh.</p>
+          <h4>Data Debug (kerusi perlukan semakan)</h4>
+          {missingDataSeats.length === 0 ? (
+            <p className="muted">Semua kerusi dalam paparan ini mempunyai data minimum yang diperlukan.</p>
+          ) : (
+            <ul className="priority-list">
+              {missingDataSeats.slice(0, 12).map((metric) => (
+                <li key={`debug-${metric.seat.seat_id}`}>
+                  <strong>{metric.seat.seat_name}</strong>
+                  <span className="muted">{!metric.seat.details_available ? "Tiada turnout/pengundi berdaftar" : ""} {!metric.seat.candidates_available ? "Tiada data calon" : ""}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       ) : null}
     </section>

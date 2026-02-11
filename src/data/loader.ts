@@ -72,8 +72,10 @@ export const loadWinnersMaster = async () => {
 };
 
 export const loadSeatDetails = async () => {
-  const response = await fetch(`${import.meta.env.BASE_URL}data/seat_details_enriched_v3.csv`);
-  if (!response.ok) return [];
+  const primary = await fetch(`${import.meta.env.BASE_URL}data/seat_details_enriched_with_candidates.csv`);
+  const fallback = !primary.ok ? await fetch(`${import.meta.env.BASE_URL}data/seat_details_enriched_v3.csv`) : null;
+  const response = primary.ok ? primary : fallback;
+  if (!response?.ok) return [];
   const text = await response.text();
   return parseCsv(text).map(
     (record) =>
@@ -90,8 +92,10 @@ export const loadSeatDetails = async () => {
 };
 
 export const loadCandidatesLong = async () => {
-  const response = await fetch(`${import.meta.env.BASE_URL}data/seat_details_enriched_with_candidates_v2.csv`);
-  if (!response.ok) return [];
+  const primary = await fetch(`${import.meta.env.BASE_URL}data/seat_details_enriched_with_candidates.csv`);
+  const fallback = !primary.ok ? await fetch(`${import.meta.env.BASE_URL}data/seat_details_enriched_with_candidates_v2.csv`) : null;
+  const response = primary.ok ? primary : fallback;
+  if (!response?.ok) return [];
   const text = await response.text();
   return parseCsv(text)
     .filter((record) => record.candidate_name || record.party || record.votes)

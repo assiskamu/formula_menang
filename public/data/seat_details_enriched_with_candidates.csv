@@ -1,0 +1,132 @@
+dun_code,dun_name,registered_voters,total_votes_cast,turnout_pct,majority_votes,source,candidate_name,party,votes,vote_share_pct
+N.01,Banggi,9484,5544,58.46,1306,astro_awani_screenshot,,,,
+N.02,Bengkoka,18056,11856,65.66,77,astro_awani_screenshot,HARUN DURABI,BN,2485.0,20.96
+N.02,Bengkoka,18056,11856,65.66,77,astro_awani_screenshot,SAMUIL MOPUN,GRS,2408.0,20.31
+N.02,Bengkoka,18056,11856,65.66,77,astro_awani_screenshot,MAKLIN MASIAU,STARSABAH,1899.0,16.02
+N.02,Bengkoka,18056,11856,65.66,77,astro_awani_screenshot,RAHIM @ RICHARD MAZAGI,KDM,1528.0,12.89
+N.02,Bengkoka,18056,11856,65.66,77,astro_awani_screenshot,FAUZIAH MOHD FUAD STEPHENS,WARISAN,1290.0,10.88
+N.02,Bengkoka,18056,11856,65.66,77,astro_awani_screenshot,JOMIN MOGOMPIT,BEBAS,1084.0,9.14
+N.02,Bengkoka,18056,11856,65.66,77,astro_awani_screenshot,JUNSIM RUMUNZING,UPKO,622.0,5.25
+N.02,Bengkoka,18056,11856,65.66,77,astro_awani_screenshot,BERUSLI KIMIN,PN,310.0,2.61
+N.02,Bengkoka,18056,11856,65.66,77,astro_awani_screenshot,MATIN UGUNG,PIS,183.0,1.54
+N.02,Bengkoka,18056,11856,65.66,77,astro_awani_screenshot,GUNSANAD MALINGKA,PBK,26.0,0.22
+N.02,Bengkoka,18056,11856,65.66,77,astro_awani_screenshot,KPD ODING,BEBAS,21.0,0.18
+N.05,Matunggong,29176,19249,65.98,334,astro_awani_screenshot,,,,
+N.08,Pintasan,15896,11891,74.8,1070,astro_awani_screenshot,,,,
+N.10,Usukan,24235,17649,72.82,442,pru_astroawani_pdf,,,,
+N.11,Kadamaian,26240,18259,69.58,9672,pru_astroawani_pdf,,,,
+N.14,Tamparuli,26767,18383,68.68,2556,astro_awani_screenshot,,,,
+N.16,Karambunai,39247,25676,65.42,365,pru_astroawani_pdf,,,,
+N.18,Inanam,45525,28190,61.92,2952,astro_awani_screenshot,,,,
+N.19,Likas,19100,10243,53.63,2425,pru_astroawani_pdf,,,,
+N.23,Petagas,20116,13393,66.58,1255,astro_awani_screenshot,,,,
+N.25,Kapayan,49597,28938,58.35,9256,pru_astroawani_pdf,,,,
+N.28,Kawang,23823,17720,74.38,8763,astro_awani_screenshot,,,,
+N.32,Klias,22277,15193,68.2,1643,astro_awani_screenshot,,,,
+N.35,Sindumin,25536,15843,62.04,362,astro_awani_screenshot,,,,
+N.38,Paginatan,26881,18357,68.29,736,astro_awani_screenshot,,,,
+N.39,Tambunan,29187,19144,65.59,7311,pru_astroawani_pdf,,,,
+N.41,Liawan,32661,20759,63.56,643,astro_awani_screenshot,NIK MOHD NADZRI NIK ZAWAWI,BN,5882.0,28.33
+N.41,Liawan,32661,20759,63.56,643,astro_awani_screenshot,ANNUAR AYUB @ BANAND,GRS,5239.0,25.24
+N.41,Liawan,32661,20759,63.56,643,astro_awani_screenshot,ADZHAR JASNI @ EDDY,WARISAN,4142.0,19.95
+N.41,Liawan,32661,20759,63.56,643,astro_awani_screenshot,AUGUSTINE A.NAIN,STARSABAH,3899.0,18.78
+N.41,Liawan,32661,20759,63.56,643,astro_awani_screenshot,WILSON GAN,UPKO,658.0,3.17
+N.41,Liawan,32661,20759,63.56,643,astro_awani_screenshot,PETER PAUN,KDM,501.0,2.41
+N.41,Liawan,32661,20759,63.56,643,astro_awani_screenshot,JOHNY ANTHONY,PN,272.0,1.31
+N.41,Liawan,32661,20759,63.56,643,astro_awani_screenshot,YUKILIN GIGING,RUMPUN,78.0,0.38
+N.41,Liawan,32661,20759,63.56,643,astro_awani_screenshot,JUNADEY EJIH @ EGIH,PIS,51.0,0.25
+N.41,Liawan,32661,20759,63.56,643,astro_awani_screenshot,MUSTAZARMIE MUSTAPHA,PPRS,37.0,0.18
+N.42,Melalap,21320,14983,70.28,525,pru_astroawani_pdf,,,,
+N.44,Tulid,16551,11620,70.21,1195,astro_awani_screenshot,JORDAN JUDE ELLRON,BEBAS,3545.0,30.51
+N.44,Tulid,16551,11620,70.21,1195,astro_awani_screenshot,EVARISTUS GUNGKIT,STARSABAH,2350.0,20.22
+N.44,Tulid,16551,11620,70.21,1195,astro_awani_screenshot,RUFINAH PENGERAN,PH,1628.0,14.01
+N.44,Tulid,16551,11620,70.21,1195,astro_awani_screenshot,EDWIN LAIMIN,BEBAS,1236.0,10.64
+N.44,Tulid,16551,11620,70.21,1195,astro_awani_screenshot,LUCIA KIHING,WARISAN,855.0,7.36
+N.44,Tulid,16551,11620,70.21,1195,astro_awani_screenshot,SUMAN YASAMBUN,BEBAS,699.0,6.02
+N.44,Tulid,16551,11620,70.21,1195,astro_awani_screenshot,MOHD KHAIRIL ABDULLAH,UPKO,555.0,4.78
+N.44,Tulid,16551,11620,70.21,1195,astro_awani_screenshot,OSWALD AISAT IGAU,KDM,416.0,3.58
+N.44,Tulid,16551,11620,70.21,1195,astro_awani_screenshot,ENGAH SINTAN @ DAHLAN ABDULLAH,BEBAS,100.0,0.86
+N.44,Tulid,16551,11620,70.21,1195,astro_awani_screenshot,VINSON RUSIKAN,PKS,93.0,0.8
+N.44,Tulid,16551,11620,70.21,1195,astro_awani_screenshot,RAYNER FRANCIS UDONG,PIS,69.0,0.59
+N.44,Tulid,16551,11620,70.21,1195,astro_awani_screenshot,JUFENA DIMIS,RUMPUN,29.0,0.25
+N.44,Tulid,16551,11620,70.21,1195,astro_awani_screenshot,CLARENCE CARTER MARAAT,BEBAS,27.0,0.23
+N.44,Tulid,16551,11620,70.21,1195,astro_awani_screenshot,LAUTIS @ LAULIS ANGGANG,BEBAS,18.0,0.15
+N.45,Sook,20349,14347,70.5,4727,astro_awani_screenshot,ARTHUR JOSEPH KURUP,BN,8307.0,57.9
+N.45,Sook,20349,14347,70.5,4727,astro_awani_screenshot,ELLRON ANGIN,GRS,3580.0,24.95
+N.45,Sook,20349,14347,70.5,4727,astro_awani_screenshot,IRENEUS PAGUT @ JRENEUS PAGUT,STARSABAH,1681.0,11.72
+N.45,Sook,20349,14347,70.5,4727,astro_awani_screenshot,JOSEPH PETER TINGGI,WARISAN,708.0,4.93
+N.45,Sook,20349,14347,70.5,4727,astro_awani_screenshot,V CHONG VIN @ SIAU HO,PIS,71.0,0.49
+N.47,Telupid,14965,10284,68.72,1011,astro_awani_screenshot,JONNYBONE J KURUM,GRS,3868.0,37.61
+N.47,Telupid,14965,10284,68.72,1011,astro_awani_screenshot,FELIX JOSEPH SAANG,UPKO,2857.0,27.78
+N.47,Telupid,14965,10284,68.72,1011,astro_awani_screenshot,BENEDICT ASMAT,BN,1687.0,16.4
+N.47,Telupid,14965,10284,68.72,1011,astro_awani_screenshot,SIMAH MATUSIP,WARISAN,806.0,7.84
+N.47,Telupid,14965,10284,68.72,1011,astro_awani_screenshot,JIKMARIYA MURAN,STARSABAH,345.0,3.35
+N.47,Telupid,14965,10284,68.72,1011,astro_awani_screenshot,MICHEL ALOK,PIS,291.0,2.83
+N.47,Telupid,14965,10284,68.72,1011,astro_awani_screenshot,JAMIN JAMRI,PN,254.0,2.47
+N.47,Telupid,14965,10284,68.72,1011,astro_awani_screenshot,NILIS JOSEPH,KDM,125.0,1.22
+N.47,Telupid,14965,10284,68.72,1011,astro_awani_screenshot,PAGRIOS @ PETRUS ZABANG,PBM,51.0,0.5
+N.49,Labuk,14564,9102,62.5,979,pru_astroawani_pdf,,,,
+N.51,Sungai Manila,18217,11478,63.01,1260,astro_awani_screenshot,HAZEM MUBARAK MUSA,GRS,4349.0,37.89
+N.51,Sungai Manila,18217,11478,63.01,1260,astro_awani_screenshot,ZAINI TIKSUN,BN,3089.0,26.91
+N.51,Sungai Manila,18217,11478,63.01,1260,astro_awani_screenshot,SITTINARA SAKAH,WARISAN,2863.0,24.94
+N.51,Sungai Manila,18217,11478,63.01,1260,astro_awani_screenshot,YUSRI ABU,PN,811.0,7.07
+N.51,Sungai Manila,18217,11478,63.01,1260,astro_awani_screenshot,IRIAN NANANG,PIS,251.0,2.19
+N.51,Sungai Manila,18217,11478,63.01,1260,astro_awani_screenshot,FAIZAL WAHAB,PPRS,115.0,1.0
+N.55,Elopura,39004,19089,48.94,3375,pru_astroawani_pdf,,,,
+N.56,Tanjong Papat,16767,9259,55.22,727,astro_awani_screenshot,ALEX THIEN,WARISAN,3254.0,35.14
+N.56,Tanjong Papat,16767,9259,55.22,727,astro_awani_screenshot,FRANKIE POON MING FUNG,KDM,2527.0,27.29
+N.56,Tanjong Papat,16767,9259,55.22,727,astro_awani_screenshot,TANG SZU CHING,PH,2241.0,24.2
+N.56,Tanjong Papat,16767,9259,55.22,727,astro_awani_screenshot,MOHD YUNUS APIL,PR,659.0,7.12
+N.56,Tanjong Papat,16767,9259,55.22,727,astro_awani_screenshot,ELVIS KOA WEI YANG,PN,240.0,2.59
+N.56,Tanjong Papat,16767,9259,55.22,727,astro_awani_screenshot,JAINUDIN BERAHIM,PIS,149.0,1.61
+N.56,Tanjong Papat,16767,9259,55.22,727,astro_awani_screenshot,SOHAIMI RAMLI,PKS,96.0,1.04
+N.56,Tanjong Papat,16767,9259,55.22,727,astro_awani_screenshot,HENLEY LIEW YUN YE,SAPP,93.0,1.0
+N.57,Kuamut,21264,12835,60.36,457,pru_astroawani_pdf,,,,
+N.58,Lamag,13859,9984,72.04,153,astro_awani_screenshot,BUNG MOKTAR RADIN,BN,3908.0,39.14
+N.58,Lamag,13859,9984,72.04,153,astro_awani_screenshot,MIHA @ MOHD ISMAIL AYOB,BEBAS,3755.0,37.61
+N.58,Lamag,13859,9984,72.04,153,astro_awani_screenshot,JOHAINIZAMSHAH JOHARI,GRS,1646.0,16.49
+N.58,Lamag,13859,9984,72.04,153,astro_awani_screenshot,SAIFULAH LOKMAN,WARISAN,372.0,3.73
+N.58,Lamag,13859,9984,72.04,153,astro_awani_screenshot,MAZLIN MADALI,PN,258.0,2.58
+N.58,Lamag,13859,9984,72.04,153,astro_awani_screenshot,SALAHUDDIN @ SALEHUDDIN ANOI,PIS,45.0,0.45
+N.59,Sukau,16541,11258,68.06,1234,astro_awani_screenshot,JAFRY ARIFFIN,BN,5143.0,45.68
+N.59,Sukau,16541,11258,68.06,1234,astro_awani_screenshot,JUHARI JANAN,GRS,3909.0,34.72
+N.59,Sukau,16541,11258,68.06,1234,astro_awani_screenshot,AZAHARI RANGON,WARISAN,1605.0,14.26
+N.59,Sukau,16541,11258,68.06,1234,astro_awani_screenshot,PENGIRAN PETRA PENGIRAN ASRI,PN,381.0,3.38
+N.59,Sukau,16541,11258,68.06,1234,astro_awani_screenshot,ROSLAN MADALI,PIS,118.0,1.05
+N.59,Sukau,16541,11258,68.06,1234,astro_awani_screenshot,NORDIN DAMIT,PR,54.0,0.48
+N.59,Sukau,16541,11258,68.06,1234,astro_awani_screenshot,AFIQ ANWARI,PKS,48.0,0.43
+N.61,Segama,29840,17190,57.61,4058,astro_awani_screenshot,MUHAMMAD ABDUL KARIM,WARISAN,7325.0,42.61
+N.61,Segama,29840,17190,57.61,4058,astro_awani_screenshot,ROMANSA LAMIN,PH,3267.0,19.01
+N.61,Segama,29840,17190,57.61,4058,astro_awani_screenshot,YVONNE YONG YIT PHUNG,SAPP,2318.0,13.48
+N.61,Segama,29840,17190,57.61,4058,astro_awani_screenshot,ALIF AFIANDY ALI,BEBAS,2195.0,12.77
+N.61,Segama,29840,17190,57.61,4058,astro_awani_screenshot,MOHAMADDIN KETAPI,BEBAS,1644.0,9.56
+N.61,Segama,29840,17190,57.61,4058,astro_awani_screenshot,EHTISHAM UR RAHMAN MHAULAHA,PIS,327.0,1.9
+N.61,Segama,29840,17190,57.61,4058,astro_awani_screenshot,NORMAN KASIMIN,BEBAS,114.0,0.66
+N.63,Kunak,24854,14429,58.06,2118,astro_awani_screenshot,ANIL SANDHU,BN,5986.0,41.49
+N.63,Kunak,24854,14429,58.06,2118,astro_awani_screenshot,JASA @ ISMAIL RAUDDAH,WARISAN,3868.0,26.81
+N.63,Kunak,24854,14429,58.06,2118,astro_awani_screenshot,NORAZLINAH ARIF,GRS,3347.0,23.2
+N.63,Kunak,24854,14429,58.06,2118,astro_awani_screenshot,KASMAN KARATE,PN,898.0,6.22
+N.63,Kunak,24854,14429,58.06,2118,astro_awani_screenshot,ISMU ISYAM ARSAD,PPRS,188.0,1.3
+N.63,Kunak,24854,14429,58.06,2118,astro_awani_screenshot,ROSELIH LUMAYAN,PIS,142.0,0.98
+N.65,Senallang,20763,10992,52.94,6837,pru_astroawani_pdf,,,,
+N.66,Bugaya,36569,19838,54.25,10046,astro_awani_screenshot,JAMIL HAMZAH,WARISAN,13414.0,67.62
+N.66,Bugaya,36569,19838,54.25,10046,astro_awani_screenshot,NOORUDIN ABD HUSSIN,GRS,3368.0,16.98
+N.66,Bugaya,36569,19838,54.25,10046,astro_awani_screenshot,ABDUL MANAN INDANAN,BN,1794.0,9.04
+N.66,Bugaya,36569,19838,54.25,10046,astro_awani_screenshot,JAMIL ABDUL GAPAR,PN,450.0,2.27
+N.66,Bugaya,36569,19838,54.25,10046,astro_awani_screenshot,MOHD TAHA MOHD DARA,STARSABAH,333.0,1.68
+N.66,Bugaya,36569,19838,54.25,10046,astro_awani_screenshot,SUFFIAN AHMAD,RUMPUN,205.0,1.03
+N.66,Bugaya,36569,19838,54.25,10046,astro_awani_screenshot,ARMAN MARASAL,PIS,181.0,0.91
+N.66,Bugaya,36569,19838,54.25,10046,astro_awani_screenshot,ROSLAN ALI,PR,63.0,0.32
+N.66,Bugaya,36569,19838,54.25,10046,astro_awani_screenshot,MAULANA UNDING,ASPIRASI,30.0,0.15
+N.69,Sri Tanjong,37327,18584,49.79,3113,pru_astroawani_pdf,,,,
+N.70,Kukusan,19225,11059,57.52,650,astro_awani_screenshot,RINA JAINAL,BEBAS,3490.0,31.56
+N.70,Kukusan,19225,11059,57.52,650,astro_awani_screenshot,MA'MUN SULAIMAN,WARISAN,2840.0,25.68
+N.70,Kukusan,19225,11059,57.52,650,astro_awani_screenshot,SAMSIAH USMAN,GRS,2063.0,18.65
+N.70,Kukusan,19225,11059,57.52,650,astro_awani_screenshot,CHAYA SULAIMAN,BN,1588.0,14.36
+N.70,Kukusan,19225,11059,57.52,650,astro_awani_screenshot,FRANCIS LAWRENCE @ YUSOP,PN,725.0,6.56
+N.70,Kukusan,19225,11059,57.52,650,astro_awani_screenshot,RAHMAN YAHYA,STARSABAH,125.0,1.13
+N.70,Kukusan,19225,11059,57.52,650,astro_awani_screenshot,HAIRUL AMIN @ KENON,BEBAS,119.0,1.08
+N.70,Kukusan,19225,11059,57.52,650,astro_awani_screenshot,RAZIK MUYONG,PIS,45.0,0.41
+N.70,Kukusan,19225,11059,57.52,650,astro_awani_screenshot,ISHAK ISMAIL,PPRS,39.0,0.35
+N.70,Kukusan,19225,11059,57.52,650,astro_awani_screenshot,MARIANI SULAIMAN,ANAKNEGERI,25.0,0.23
+N.72,Merotai,26179,15213,58.11,4016,pru_astroawani_pdf,,,,

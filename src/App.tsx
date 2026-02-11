@@ -172,7 +172,7 @@ const DataCoverageBanner = () => {
   const { detailCoverage, candidateCoverage, dataSummary } = useDashboard();
   return (
     <div className="coverage-banner" role="status" aria-live="polite">
-      <strong>Data: {dataSummary.totalDun} DUN • Lengkap: {detailCoverage} • Calon: {candidateCoverage} • BN: {dataSummary.bnWins}</strong>
+      <strong>Data lengkap {detailCoverage}/{dataSummary.totalDun}, calon {candidateCoverage}/{dataSummary.totalDun} • BN menang: {dataSummary.bnWins}</strong>
     </div>
   );
 };
@@ -226,12 +226,12 @@ const Layout = () => {
             </>
           ) : (
             <>
-              <NavLink to="/" end>Ringkasan</NavLink>
+              <NavLink to="/" end>Cara Guna</NavLink>
               <button type="button" className="nav-help-button" onClick={() => setShowHelpModal(true)}>Cara Guna (1 min)</button>
-              <NavLink to="/funnel">Perjalanan Undi</NavLink>
-              <NavLink to="/gotv">Pelan Hari Mengundi</NavLink>
+              <NavLink to="/funnel">Ringkasan Kerusi</NavLink>
+              <NavLink to="/gotv">Apa Tindakan</NavLink>
               <NavLink to="/bantuan">Bantuan & Maksud Angka</NavLink>
-              <NavLink to="/penerangan">Penerangan Istilah</NavLink>
+              <NavLink to="/penerangan">Istilah & Maksud</NavLink>
               <NavLink to="/kemas-kini">Kemas Kini Data</NavLink>
             </>
           )}
