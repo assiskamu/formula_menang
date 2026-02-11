@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, Route, Routes } from "react-router-dom";
-import { DashboardProvider, useDashboard } from "./data/dashboard";
-import RingkasanKerusi from "./pages/RingkasanKerusi";
-import FunnelKempen from "./pages/FunnelKempen";
-import OperasiGotv from "./pages/OperasiGotv";
-import BantuanFormula from "./pages/BantuanFormula";
-import PeneranganIstilah from "./pages/PeneranganIstilah";
-import KemasKiniData from "./pages/KemasKiniData";
+import BeginnerModeToggle from "./components/BeginnerModeToggle";
+import HelpModal from "./components/HelpModal";
 import { actionTagGuides, type ActionTag } from "./data/actionTags";
+import { DashboardProvider, useDashboard } from "./data/dashboard";
+import BantuanFormula from "./pages/BantuanFormula";
+import FunnelKempen from "./pages/FunnelKempen";
+import KemasKiniData from "./pages/KemasKiniData";
+import OperasiGotv from "./pages/OperasiGotv";
+import PeneranganIstilah from "./pages/PeneranganIstilah";
+import RingkasanKerusi from "./pages/RingkasanKerusi";
 
 const actionTags: ActionTag[] = ["GOTV", "PERSUASION", "BASE"];
 
@@ -100,65 +102,64 @@ const Filters = () => {
 
   return (
     <>
-    <div className="mobile-top-bar" role="region" aria-label="Navigasi pantas mudah alih">
-      <label>
-        <span className="label-title">Parlimen</span>
-        <input
-          list="parlimen-mobile-options"
-          value={parlimenQuery}
-          onChange={(event) => { setParlimenQuery(event.target.value); updateParlimenFromSearch(event.target.value); }}
-          placeholder="Cari parlimen"
-          aria-label="Cari parlimen"
-        />
-        <datalist id="parlimen-mobile-options">
-          {parlimenOptions.map((parlimen) => <option key={parlimen.code} value={`${parlimen.code} ${parlimen.name}`} />)}
-        </datalist>
-      </label>
+      <div className="mobile-top-bar" role="region" aria-label="Navigasi pantas mudah alih">
+        <label>
+          <span className="label-title">Parlimen</span>
+          <input
+            list="parlimen-mobile-options"
+            value={parlimenQuery}
+            onChange={(event) => { setParlimenQuery(event.target.value); updateParlimenFromSearch(event.target.value); }}
+            placeholder="Cari parlimen"
+            aria-label="Cari parlimen"
+          />
+          <datalist id="parlimen-mobile-options">
+            {parlimenOptions.map((parlimen) => <option key={parlimen.code} value={`${parlimen.code} ${parlimen.name}`} />)}
+          </datalist>
+        </label>
 
-      <label>
-        <span className="label-title">DUN</span>
-        <input
-          list="dun-mobile-options"
-          value={dunQuery}
-          onChange={(event) => { setDunQuery(event.target.value); updateDunFromSearch(event.target.value); }}
-          placeholder={dunOptions.length === 0 ? "Pilih parlimen dulu" : "Cari DUN"}
-          aria-label="Cari DUN"
-          disabled={dunOptions.length === 0}
-        />
-        <datalist id="dun-mobile-options">
-          {dunOptions.map((dun) => <option key={dun.code} value={`${dun.code} ${dun.name}`} />)}
-        </datalist>
-      </label>
+        <label>
+          <span className="label-title">DUN</span>
+          <input
+            list="dun-mobile-options"
+            value={dunQuery}
+            onChange={(event) => { setDunQuery(event.target.value); updateDunFromSearch(event.target.value); }}
+            placeholder={dunOptions.length === 0 ? "Pilih parlimen dulu" : "Cari DUN"}
+            aria-label="Cari DUN"
+            disabled={dunOptions.length === 0}
+          />
+          <datalist id="dun-mobile-options">
+            {dunOptions.map((dun) => <option key={dun.code} value={`${dun.code} ${dun.name}`} />)}
+          </datalist>
+        </label>
 
-      <div className="mobile-top-actions">
-        <button type="button" onClick={resetFilters}>Reset</button>
-        <button type="button" className="secondary" onClick={() => window.dispatchEvent(new CustomEvent("open-istilah-sheet"))}>Istilah</button>
+        <div className="mobile-top-actions">
+          <button type="button" onClick={resetFilters}>Reset</button>
+          <button type="button" className="secondary" onClick={() => window.dispatchEvent(new CustomEvent("open-istilah-sheet"))}>Istilah</button>
+        </div>
       </div>
-    </div>
 
-    <div className="filters desktop-filters">
-      <label>Parlimen (Sabah)
-        <select value={filters.parlimen} onChange={(event) => setFilters((prev) => ({ ...prev, parlimen: event.target.value, dun: "" }))}>
-          <option value="">Semua Parlimen</option>
-          {parlimenOptions.map((parlimen) => <option key={parlimen.code} value={parlimen.code}>{parlimen.code} {parlimen.name}</option>)}
-        </select>
-      </label>
-      <label>DUN (ikut Parlimen)
-        <select value={filters.dun} onChange={(event) => setFilters((prev) => ({ ...prev, dun: event.target.value }))} disabled={dunOptions.length === 0}>
-          <option value="">Semua DUN</option>
-          {dunOptions.map((dun) => <option key={dun.code} value={dun.code}>{dun.code} {dun.name}</option>)}
-        </select>
-      </label>
-      <label>Senario Turnout
-        <select value={filters.turnoutScenario} onChange={(event) => setFilters((prev) => ({ ...prev, turnoutScenario: event.target.value as keyof typeof assumptions.turnout_scenario }))}>
-          {Object.keys(assumptions.turnout_scenario).map((scenario) => <option key={scenario} value={scenario}>{scenarioLabel[scenario] ?? scenario}</option>)}
-        </select>
-      </label>
-    </div>
+      <div className="filters desktop-filters">
+        <label>Parlimen (Sabah)
+          <select value={filters.parlimen} onChange={(event) => setFilters((prev) => ({ ...prev, parlimen: event.target.value, dun: "" }))}>
+            <option value="">Semua Parlimen</option>
+            {parlimenOptions.map((parlimen) => <option key={parlimen.code} value={parlimen.code}>{parlimen.code} {parlimen.name}</option>)}
+          </select>
+        </label>
+        <label>DUN (ikut Parlimen)
+          <select value={filters.dun} onChange={(event) => setFilters((prev) => ({ ...prev, dun: event.target.value }))} disabled={dunOptions.length === 0}>
+            <option value="">Semua DUN</option>
+            {dunOptions.map((dun) => <option key={dun.code} value={dun.code}>{dun.code} {dun.name}</option>)}
+          </select>
+        </label>
+        <label>Senario Turnout
+          <select value={filters.turnoutScenario} onChange={(event) => setFilters((prev) => ({ ...prev, turnoutScenario: event.target.value as keyof typeof assumptions.turnout_scenario }))}>
+            {Object.keys(assumptions.turnout_scenario).map((scenario) => <option key={scenario} value={scenario}>{scenarioLabel[scenario] ?? scenario}</option>)}
+          </select>
+        </label>
+      </div>
     </>
   );
 };
-
 
 const DataCoverageBanner = () => {
   const { detailCoverage, candidateCoverage, dataSummary } = useDashboard();
@@ -189,8 +190,9 @@ const BackToTop = () => {
 };
 
 const Layout = () => {
-  const { isLoading, error } = useDashboard();
+  const { isLoading, error, dashboardMode } = useDashboard();
   const [showGlossarySheet, setShowGlossarySheet] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   useEffect(() => {
     const handler = () => setShowGlossarySheet(true);
@@ -209,13 +211,15 @@ const Layout = () => {
         </div>
         <nav>
           <NavLink to="/" end>Ringkasan BN War Room</NavLink>
-          <NavLink to="/funnel">Funnel Kempen</NavLink>
-          <NavLink to="/gotv">Operasi GOTV</NavLink>
-          <NavLink to="/bantuan">Bantuan & Maksud Angka</NavLink>
-          <NavLink to="/penerangan">Penerangan Istilah</NavLink>
-          <NavLink to="/kemas-kini">Kemas Kini Data</NavLink>
+          <button type="button" className={`nav-help-button ${dashboardMode === "beginner" ? "beginner-highlight" : ""}`} onClick={() => setShowHelpModal(true)}>Cara Guna (1 min)</button>
+          <NavLink to="/funnel" className={dashboardMode === "beginner" ? "beginner-muted" : ""}>Funnel Kempen</NavLink>
+          <NavLink to="/gotv" className={dashboardMode === "beginner" ? "beginner-muted" : ""}>Operasi GOTV</NavLink>
+          <NavLink to="/bantuan" className={dashboardMode === "beginner" ? "beginner-muted" : ""}>Bantuan & Maksud Angka</NavLink>
+          <NavLink to="/penerangan" className={dashboardMode === "beginner" ? "beginner-muted" : ""}>Penerangan Istilah</NavLink>
+          <NavLink to="/kemas-kini" className={dashboardMode === "beginner" ? "beginner-muted" : ""}>Kemas Kini Data</NavLink>
         </nav>
       </header>
+      <BeginnerModeToggle />
       <DataCoverageBanner />
       <Filters />
       <TetapanThreshold />
@@ -229,6 +233,8 @@ const Layout = () => {
           <Route path="/kemas-kini" element={<KemasKiniData />} />
         </Routes>
       </main>
+
+      <HelpModal open={showHelpModal} onClose={() => setShowHelpModal(false)} />
 
       {showGlossarySheet && (
         <div className="bottom-sheet-overlay" role="dialog" aria-modal="true" aria-label="Istilah penting" onClick={() => setShowGlossarySheet(false)}>

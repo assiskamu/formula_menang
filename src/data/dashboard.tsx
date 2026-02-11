@@ -23,6 +23,9 @@ const defaultAssumptions: Assumptions = {
 
 const defaultFilters = { parlimen: "", dun: "", turnoutScenario: "base" };
 const THRESHOLDS_KEY = "formula-menang-thresholds-v1";
+const DASHBOARD_MODE_KEY = "formula-menang-dashboard-mode-v1";
+
+type DashboardMode = "beginner" | "advanced";
 
 const DashboardContext = createContext<{
   isLoading: boolean;
@@ -51,6 +54,8 @@ const DashboardContext = createContext<{
   saveCandidateOverride: (dunCode: string, payload: LocalCandidateOverride[]) => void;
   resetLocalOverrides: () => void;
   importLocalOverrides: (incoming: Partial<LocalOverrides>, mode: "merge" | "replace") => void;
+  dashboardMode: DashboardMode;
+  setDashboardMode: React.Dispatch<React.SetStateAction<DashboardMode>>;
 }>({
   isLoading: true,
   error: null,
@@ -78,6 +83,8 @@ const DashboardContext = createContext<{
   saveCandidateOverride: () => undefined,
   resetLocalOverrides: () => undefined,
   importLocalOverrides: () => undefined,
+  dashboardMode: "beginner",
+  setDashboardMode: () => undefined,
 });
 
 export const DashboardProvider = ({ children }: { children: React.ReactNode }) => {
@@ -96,6 +103,12 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
   const [latestProgress, setLatestProgress] = useState<Map<string, ProgressRow>>(new Map());
   const [filters, setFilters] = useState(defaultFilters);
   const [grain, setGrain] = useState<Grain>("parlimen");
+  const [dashboardMode, setDashboardMode] = useState<DashboardMode>(() => {
+    if (typeof window === "undefined") return "beginner";
+    const saved = window.localStorage.getItem(DASHBOARD_MODE_KEY);
+    if (saved === "advanced" || saved === "beginner") return saved;
+    return "beginner";
+  });
 
   useEffect(() => {
     const saved = localStorage.getItem(THRESHOLDS_KEY);
@@ -111,6 +124,10 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
   useEffect(() => {
     localStorage.setItem(THRESHOLDS_KEY, JSON.stringify(thresholds));
   }, [thresholds]);
+
+  useEffect(() => {
+    localStorage.setItem(DASHBOARD_MODE_KEY, dashboardMode);
+  }, [dashboardMode]);
 
   const recomputeMetrics = (
     baseSeats: Seat[],
@@ -312,6 +329,8 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
         saveCandidateOverride,
         resetLocalOverrides,
         importLocalOverrides,
+        dashboardMode,
+        setDashboardMode,
       }}
     >
       {children}

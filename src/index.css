@@ -556,3 +556,116 @@ button.danger {
     display: flex;
   }
 }
+
+.nav-help-button {
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: #dbeafe;
+  font-weight: 600;
+  border: 1px solid #bfdbfe;
+}
+
+.beginner-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.beginner-muted {
+  opacity: 0.55;
+}
+
+.beginner-highlight {
+  background: #1d4ed8;
+  color: #fff;
+}
+
+.beginner-stepper {
+  display: grid;
+  gap: 14px;
+}
+
+.step-card h4 {
+  margin: 0;
+}
+
+.step-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.beginner-status-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.beginner-mini-card {
+  box-shadow: none;
+  border-color: #bfdbfe;
+}
+
+.beginner-mini-card p {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.beginner-action-card {
+  background: #f8fbff;
+  border-color: #bfdbfe;
+}
+
+.beginner-action-card h3 {
+  margin: 2px 0;
+}
+
+.beginner-action-card ul {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 4px;
+}
+
+.glossary-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.glossary-mini-grid article {
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  padding: 10px;
+  background: #f8fbff;
+}
+
+.glossary-mini-grid h4 {
+  margin: 0 0 6px;
+}
+
+.glossary-mini-grid p {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 767px) {
+  .beginner-stepper {
+    grid-template-columns: 1fr;
+  }
+
+  .step-grid,
+  .beginner-status-grid,
+  .glossary-mini-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .beginner-mini-card,
+  .beginner-action-card,
+  .step-grid select {
+    width: 100%;
+  }
+}

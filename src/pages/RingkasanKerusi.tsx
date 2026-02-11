@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Badge from "../components/Badge";
+import BeginnerStepper from "../components/BeginnerStepper";
 import InfoTooltip from "../components/InfoTooltip";
 import KpiCard from "../components/KpiCard";
+import QuickGlossary from "../components/QuickGlossary";
+import { actionTagGuides, getActionTagsFromText, type ActionTag } from "../data/actionTags";
 import { useDashboard } from "../data/dashboard";
 import type { SeatMetrics } from "../data/types";
-import { actionTagGuides, getActionTagsFromText, type ActionTag } from "../data/actionTags";
 import { formatNumber, formatPercent } from "../utils/format";
 
 const scenarioLabel: Record<string, string> = { low: "Rendah", base: "Sederhana", high: "Tinggi" };
@@ -74,7 +76,7 @@ const ActionTagChips = ({ text }: { text: string }) => {
 };
 
 const RingkasanKerusi = () => {
-  const { metrics, filteredMetrics, setGrain, grain, dataWarnings, dataSummary, filters, setFilters, thresholds, candidatesByDun } = useDashboard();
+  const { metrics, filteredMetrics, setGrain, grain, dataWarnings, dataSummary, filters, setFilters, thresholds, candidatesByDun, dashboardMode } = useDashboard();
   const [mode, setMode] = useState<"ringkas" | "analitik">("ringkas");
   const [tableSearch, setTableSearch] = useState("");
   const [tableSort, setTableSort] = useState<"default" | "risk" | "target" | "turnout">("default");
@@ -84,8 +86,11 @@ const RingkasanKerusi = () => {
   const [showDetailSheet, setShowDetailSheet] = useState(false);
   const [showFocusPanel, setShowFocusPanel] = useState(false);
   const [focusedSeats, setFocusedSeats] = useState<string[]>([]);
+  const [showFullTable, setShowFullTable] = useState(false);
+  const [showRiskTarget, setShowRiskTarget] = useState(false);
   const tableRef = useRef<HTMLDivElement | null>(null);
 
+  const isBeginner = dashboardMode === "beginner";
   const dunMetrics = useMemo(() => metrics.filter((m) => m.seat.grain === "dun"), [metrics]);
   const bnSeatsWon = useMemo(() => dunMetrics.filter((m) => m.seat.winner_party === "BN"), [dunMetrics]);
   const defendSeats = bnSeatsWon;
@@ -169,6 +174,17 @@ const RingkasanKerusi = () => {
     await navigator.clipboard.writeText(summary);
   };
 
+  const copyBeginnerAction = async () => {
+    if (!selectedDunMetric) return;
+    const lines = [
+      `Kawasan: ${selectedDunMetric.seat.seat_name}`,
+      `Status: ${selectedDunMetric.bnStatusTag}`,
+      `Fokus: ${selectedDunMetric.cadanganTindakan}`,
+      "Tindakan hari ini: ikut 3 bullet dalam Flow 1-2-3.",
+    ];
+    await navigator.clipboard.writeText(lines.join("\n"));
+  };
+
   const toggleFocus = (metric: SeatMetrics) => {
     const key = metric.seat.seat_id;
     setFocusedSeats((prev) => prev.includes(key) ? prev.filter((item) => item !== key) : [...prev, key]);
@@ -203,19 +219,45 @@ const RingkasanKerusi = () => {
           Data: {formatNumber(totalDun)} DUN • Lengkap: {formatNumber(lengkapCount)} ({lengkapPct}%) • Calon: {formatNumber(calonCount)} • BN: {formatNumber(dataSummary?.bnWins ?? 0)}
         </p>
         <div className="segmented" style={{ marginTop: 10 }}><button type="button" className={grain === "parlimen" ? "active" : ""} onClick={() => setGrain("parlimen")}>Parlimen</button><button type="button" className={grain === "dun" ? "active" : ""} onClick={() => setGrain("dun")}>DUN</button></div>
-        <div className="segmented" style={{ marginTop: 8 }}><button type="button" className={mode === "ringkas" ? "active" : ""} onClick={() => setMode("ringkas")}>Mode Ringkas</button><button type="button" className={mode === "analitik" ? "active" : ""} onClick={() => setMode("analitik")}>Mode Analitik</button></div>
-        <p className="context-label">Paparan: {viewLabel} • {modeLabel} • Turnout {turnoutLabel}</p>
+        {!isBeginner ? <div className="segmented" style={{ marginTop: 8 }}><button type="button" className={mode === "ringkas" ? "active" : ""} onClick={() => setMode("ringkas")}>Mode Ringkas</button><button type="button" className={mode === "analitik" ? "active" : ""} onClick={() => setMode("analitik")}>Mode Analitik</button></div> : null}
+        <p className="context-label">Paparan: {viewLabel} • {isBeginner ? "Mode Pemula" : modeLabel} • Turnout {turnoutLabel}</p>
       </div>
+
+      {isBeginner ? (
+        <>
+          <BeginnerStepper
+            parlimen={filters.parlimen}
+            dun={filters.dun}
+            parlimenOptions={metrics.filter((m) => m.seat.grain === "parlimen").map((m) => ({ code: m.seat.parlimen_code, name: m.seat.parlimen_name }))}
+            dunOptions={dunMetrics
+              .filter((m) => !filters.parlimen || m.seat.parlimen_code === filters.parlimen)
+              .map((m) => ({ code: m.seat.dun_code ?? "", name: m.seat.dun_name ?? "" }))}
+            onParlimenChange={(value) => setFilters((prev) => ({ ...prev, parlimen: value, dun: "" }))}
+            onDunChange={(value) => setFilters((prev) => ({ ...prev, dun: value }))}
+            selectedMetric={selectedDunMetric}
+            onCopyAction={() => void copyBeginnerAction()}
+          />
+          <QuickGlossary />
+          <div className="card">
+            <div className="data-actions">
+              <button type="button" onClick={() => setShowFullTable((prev) => !prev)}>{showFullTable ? "Sembunyi Jadual Penuh" : "Lihat Jadual Penuh"}</button>
+              <button type="button" onClick={() => setShowRiskTarget((prev) => !prev)}>{showRiskTarget ? "Sembunyi Risiko/Sasaran" : "Lihat Risiko/Sasaran"}</button>
+            </div>
+          </div>
+        </>
+      ) : null}
 
       {showFocusPanel && <div className="card"><h3>Kerusi Fokus (War Room)</h3><div className="data-actions"><button type="button" onClick={exportFocusCsv} disabled={focusMetrics.length === 0}>Export Fokus</button></div>{focusMetrics.length === 0 ? <p className="muted">Belum ada kerusi fokus. Gunakan butang "Tambah ke Fokus ⭐" pada jadual.</p> : <ul className="priority-list">{focusMetrics.map((m) => <li key={m.seat.seat_id}><strong>{m.seat.seat_name}</strong><span>{m.bnStatusTag}</span><div className="data-actions"><button type="button" onClick={() => { setFilters((prev) => ({ ...prev, dun: m.seat.dun_code ?? "" })); setShowDetailSheet(true); }}>Buka butiran</button><button type="button" onClick={() => void copyRingkasan(m)}>Copy WhatsApp</button><button type="button" onClick={() => toggleFocus(m)}>Buang Fokus</button></div></li>)}</ul>}</div>}
 
-      <div className="grid three-col compact-priority-grid">
-        <article className="card compact-priority-card"><h4>Prioriti Hari Ini: Sasaran</h4>{todayPriorities.target ? <><p>Sasaran: {todayPriorities.target.seat.seat_name} • margin {formatNumber(todayPriorities.target.bnMarginToWin)}</p><p className="muted">Klik untuk tapis.</p><button type="button" onClick={() => applyPriorityFilter(["sasaranDekat", "bnKalah"])}>Tapis ke Jadual</button></> : <p className="muted">Tiada sasaran dekat. Cuba: Switch Target View / Longgarkan threshold.</p>}</article>
-        <article className="card compact-priority-card"><h4>Prioriti Hari Ini: Defend</h4>{todayPriorities.risk ? <><p>Defend: {todayPriorities.risk.seat.seat_name} • buffer {formatNumber(todayPriorities.risk.bnBufferToLose)}</p><p className="muted">Klik untuk tapis.</p><button type="button" onClick={() => applyPriorityFilter(["defendRapuh", "bnMenang"])}>Tapis ke Jadual</button></> : <p className="muted">Tiada kerusi defend. Cuba tukar paparan DUN.</p>}</article>
-        <article className="card compact-priority-card"><h4>Prioriti Hari Ini: Turnout</h4>{todayPriorities.lowTurnout ? <><p>{todayPriorities.lowTurnout.seat.seat_name} • turnout {formatTurnout(todayPriorities.lowTurnout.seat.turnout_pct)}</p><p className="muted">Klik untuk tapis.</p><button type="button" onClick={() => applyPriorityFilter(["turnoutRendah"])}>Tapis ke Jadual</button></> : <p className="muted">Tiada data turnout. Cuba: semak Kemas Kini Data.</p>}</article>
-      </div>
+      {(!isBeginner || showRiskTarget) ? (
+        <div className="grid three-col compact-priority-grid">
+          <article className="card compact-priority-card"><h4>Prioriti Hari Ini: Sasaran</h4>{todayPriorities.target ? <><p>Sasaran: {todayPriorities.target.seat.seat_name} • margin {formatNumber(todayPriorities.target.bnMarginToWin)}</p><p className="muted">Klik untuk tapis.</p><button type="button" onClick={() => applyPriorityFilter(["sasaranDekat", "bnKalah"])}>Tapis ke Jadual</button></> : <p className="muted">Tiada sasaran dekat. Cuba: Switch Target View / Longgarkan threshold.</p>}</article>
+          <article className="card compact-priority-card"><h4>Prioriti Hari Ini: Defend</h4>{todayPriorities.risk ? <><p>Defend: {todayPriorities.risk.seat.seat_name} • buffer {formatNumber(todayPriorities.risk.bnBufferToLose)}</p><p className="muted">Klik untuk tapis.</p><button type="button" onClick={() => applyPriorityFilter(["defendRapuh", "bnMenang"])}>Tapis ke Jadual</button></> : <p className="muted">Tiada kerusi defend. Cuba tukar paparan DUN.</p>}</article>
+          <article className="card compact-priority-card"><h4>Prioriti Hari Ini: Turnout</h4>{todayPriorities.lowTurnout ? <><p>{todayPriorities.lowTurnout.seat.seat_name} • turnout {formatTurnout(todayPriorities.lowTurnout.seat.turnout_pct)}</p><p className="muted">Klik untuk tapis.</p><button type="button" onClick={() => applyPriorityFilter(["turnoutRendah"])}>Tapis ke Jadual</button></> : <p className="muted">Tiada data turnout. Cuba: semak Kemas Kini Data.</p>}</article>
+        </div>
+      ) : null}
 
-      {mode === "analitik" && <div className="card"><div className="title-row"><h3 style={{ margin: 0 }}>Apa maksud tag ini?</h3><button type="button" onClick={() => setShowGuide((s) => !s)}>{showGuide ? "Tutup" : "Buka penerangan"}</button></div><p className="muted">BASE: kekalkan penyokong • PERSUASION: tarik atas pagar • GOTV: pastikan keluar mengundi</p>{showGuide && <div className="tag-guide-grid">{(["BASE", "PERSUASION", "GOTV"] as ActionTag[]).map((tag) => <article key={tag} className="tag-guide-mini"><h4>{tag}</h4><p>{actionTagGuides[tag].maksud}</p></article>)}</div>}</div>}
+      {!isBeginner && mode === "analitik" && <div className="card"><div className="title-row"><h3 style={{ margin: 0 }}>Apa maksud tag ini?</h3><button type="button" onClick={() => setShowGuide((s) => !s)}>{showGuide ? "Tutup" : "Buka penerangan"}</button></div><p className="muted">BASE: kekalkan penyokong • PERSUASION: tarik atas pagar • GOTV: pastikan keluar mengundi</p>{showGuide && <div className="tag-guide-grid">{(["BASE", "PERSUASION", "GOTV"] as ActionTag[]).map((tag) => <article key={tag} className="tag-guide-mini"><h4>{tag}</h4><p>{actionTagGuides[tag].maksud}</p></article>)}</div>}</div>}
 
       <div className="grid grid-kpi">
         <KpiCard label="BN Seats Won" value={formatNumber(bnSeatsWon.length)} helper="Bilangan DUN dimenangi BN" />
@@ -224,15 +266,17 @@ const RingkasanKerusi = () => {
         <KpiCard label="Amaran Data" value={formatNumber(dataWarnings.length)} helper="Isu integriti data" />
       </div>
 
-      <div className="card" ref={tableRef}>
-        <div className="title-row"><h3 style={{ margin: 0 }}>Jadual Kerusi</h3><button type="button" onClick={() => setShowLegend(true)}>Legend ℹ️</button></div>
-        <div className="quick-chips" role="group" aria-label="Penapis pantas war room">{(Object.keys(chipLabels) as QuickChip[]).map((chip) => <button key={chip} type="button" className={activeChips.includes(chip) ? "chip-active" : ""} onClick={() => toggleChip(chip)}>{chipLabels[chip]}</button>)}{!!activeChips.length && <button type="button" onClick={() => setActiveChips([])}>Clear all</button>}</div>
-        <div className="table-controls"><input type="search" value={tableSearch} onChange={(e) => setTableSearch(e.target.value)} placeholder="Cari DUN / Parlimen / Parti" /><select value={tableSort} onChange={(e) => setTableSort(e.target.value as typeof tableSort)}><option value="default">Susun: Lalai</option><option value="risk">Risiko (majoriti kecil)</option><option value="target">Target (margin kecil)</option><option value="turnout">Turnout terendah</option></select></div>
+      {(!isBeginner || showFullTable) ? (
+        <div className="card" ref={tableRef}>
+          <div className="title-row"><h3 style={{ margin: 0 }}>Jadual Kerusi</h3><button type="button" onClick={() => setShowLegend(true)}>Legend ℹ️</button></div>
+          <div className="quick-chips" role="group" aria-label="Penapis pantas war room">{(Object.keys(chipLabels) as QuickChip[]).map((chip) => <button key={chip} type="button" className={activeChips.includes(chip) ? "chip-active" : ""} onClick={() => toggleChip(chip)}>{chipLabels[chip]}</button>)}{!!activeChips.length && <button type="button" onClick={() => setActiveChips([])}>Clear all</button>}</div>
+          <div className="table-controls"><input type="search" value={tableSearch} onChange={(e) => setTableSearch(e.target.value)} placeholder="Cari DUN / Parlimen / Parti" /><select value={tableSort} onChange={(e) => setTableSort(e.target.value as typeof tableSort)}><option value="default">Susun: Lalai</option><option value="risk">Risiko (majoriti kecil)</option><option value="target">Target (margin kecil)</option><option value="turnout">Turnout terendah</option></select></div>
 
-        <div className="table-wrapper desktop-table-view"><table><thead><tr><th className="sticky-col">DUN</th><th>Status</th><th>Data</th><th>Margin BN</th><th>Majority</th><th>Turnout</th><th>Tindakan</th><th>Aksi</th></tr></thead><tbody>{tableRows.map((metric) => { const confidence = confidenceMeta(metric); const availability = availabilityBadge(metric.seat.details_available, metric.seat.candidates_available); const isFocus = focusedSeats.includes(metric.seat.seat_id); return <tr key={metric.seat.seat_id} className="interactive-row"><td className="sticky-col"><strong>{metric.seat.seat_name}</strong><p className="muted">{metric.seat.parlimen_name}</p></td><td><Badge label={metric.bnStatusTag} tone={toneFromMetric(metric.riskLevel, metric.targetLevel)} /></td><td><div className="metric-stack"><Badge label={availability.label} tone={availability.tone} /><InfoTooltip label={`Data confidence ${metric.seat.seat_name}`} maksud={confidence.desc} formula="Lengkap: turnout+majoriti+pemenang+daftar+undi" contoh="Minimum: data pemenang sahaja" /><Badge label={confidence.label} tone={confidence.tone} /></div></td><td>{formatNumber(metric.seat.bn_rank === 1 ? metric.bnBufferToLose : metric.bnMarginToWin)}</td><td>{formatNumber(metric.seat.majority_votes ?? metric.seat.last_majority ?? 0)}</td><td>{typeof metric.seat.turnout_pct === "number" ? formatPercent(metric.seat.turnout_pct / 100) : <span className="muted">— <small>Tiada data turnout</small></span>}</td><td><span className={`action-chip ${actionTone(metric.cadanganTindakan)}`}>{metric.cadanganTindakan}</span><ActionTagChips text={metric.cadanganTindakan} /></td><td><div className="data-actions"><button type="button" onClick={() => { setFilters((prev) => ({ ...prev, dun: metric.seat.dun_code ?? "" })); setShowDetailSheet(true); }}>Butiran</button><button type="button" onClick={() => toggleFocus(metric)}>{isFocus ? "Buang Fokus" : "Tambah ke Fokus ⭐"}</button></div></td></tr>; })}</tbody></table></div>
+          <div className="table-wrapper desktop-table-view"><table><thead><tr><th className="sticky-col">DUN</th><th>Status</th><th>Data</th><th>Margin BN</th><th>Majority</th><th>Turnout</th><th>Tindakan</th><th>Aksi</th></tr></thead><tbody>{tableRows.map((metric) => { const confidence = confidenceMeta(metric); const availability = availabilityBadge(metric.seat.details_available, metric.seat.candidates_available); const isFocus = focusedSeats.includes(metric.seat.seat_id); return <tr key={metric.seat.seat_id} className="interactive-row"><td className="sticky-col"><strong>{metric.seat.seat_name}</strong><p className="muted">{metric.seat.parlimen_name}</p></td><td><Badge label={metric.bnStatusTag} tone={toneFromMetric(metric.riskLevel, metric.targetLevel)} /></td><td><div className="metric-stack"><Badge label={availability.label} tone={availability.tone} /><InfoTooltip label={`Data confidence ${metric.seat.seat_name}`} maksud={confidence.desc} formula="Lengkap: turnout+majoriti+pemenang+daftar+undi" contoh="Minimum: data pemenang sahaja" /><Badge label={confidence.label} tone={confidence.tone} /></div></td><td>{formatNumber(metric.seat.bn_rank === 1 ? metric.bnBufferToLose : metric.bnMarginToWin)}</td><td>{formatNumber(metric.seat.majority_votes ?? metric.seat.last_majority ?? 0)}</td><td>{typeof metric.seat.turnout_pct === "number" ? formatPercent(metric.seat.turnout_pct / 100) : <span className="muted">— <small>Tiada data turnout</small></span>}</td><td><span className={`action-chip ${actionTone(metric.cadanganTindakan)}`}>{metric.cadanganTindakan}</span><ActionTagChips text={metric.cadanganTindakan} /></td><td><div className="data-actions"><button type="button" onClick={() => { setFilters((prev) => ({ ...prev, dun: metric.seat.dun_code ?? "" })); setShowDetailSheet(true); }}>Butiran</button><button type="button" onClick={() => toggleFocus(metric)}>{isFocus ? "Buang Fokus" : "Tambah ke Fokus ⭐"}</button></div></td></tr>; })}</tbody></table></div>
 
-        <div className="mobile-card-list">{tableRows.map((metric) => { const turnout = metric.seat.turnout_pct; const confidence = confidenceMeta(metric); return <article key={metric.seat.seat_id} className="card seat-card" onClick={() => { setFilters((prev) => ({ ...prev, dun: metric.seat.dun_code ?? "" })); setShowDetailSheet(true); }}><h3>{metric.seat.seat_name}</h3><Badge label={metric.seat.winner_party === "BN" ? "BN Menang" : "Sasaran"} tone={metric.seat.winner_party === "BN" ? "ok" : "warn"} /><div className="detail-stats"><p>Buffer/Margin: <strong>{formatNumber(metric.seat.bn_rank === 1 ? metric.bnBufferToLose : metric.bnMarginToWin)}</strong></p><p>Majority: <strong>{formatNumber(metric.seat.majority_votes ?? metric.seat.last_majority ?? 0)}</strong></p><p>Turnout: <strong>{typeof turnout === "number" ? formatPercent(turnout / 100) : "—"}</strong></p><p>Data: <strong>{confidence.label}</strong></p></div><span className={`action-chip ${actionTone(metric.cadanganTindakan)}`}>{metric.cadanganTindakan}</span></article>; })}</div>
-      </div>
+          <div className="mobile-card-list">{tableRows.map((metric) => { const turnout = metric.seat.turnout_pct; const confidence = confidenceMeta(metric); return <article key={metric.seat.seat_id} className="card seat-card"><h3>{metric.seat.seat_name}</h3><Badge label={metric.seat.winner_party === "BN" ? "BN Menang" : "Sasaran"} tone={metric.seat.winner_party === "BN" ? "ok" : "warn"} /><div className="detail-stats"><p>Buffer/Margin: <strong>{formatNumber(metric.seat.bn_rank === 1 ? metric.bnBufferToLose : metric.bnMarginToWin)}</strong></p><p>Majority: <strong>{formatNumber(metric.seat.majority_votes ?? metric.seat.last_majority ?? 0)}</strong></p><p>Turnout: <strong>{typeof turnout === "number" ? formatPercent(turnout / 100) : "—"}</strong></p><p>Data: <strong>{confidence.label}</strong></p></div><span className={`action-chip ${actionTone(metric.cadanganTindakan)}`}>{metric.cadanganTindakan}</span><button type="button" onClick={() => { setFilters((prev) => ({ ...prev, dun: metric.seat.dun_code ?? "" })); setShowDetailSheet(true); }}>Lihat detail</button></article>; })}</div>
+        </div>
+      ) : null}
 
       {showLegend && <div className="bottom-sheet-overlay" role="dialog" aria-modal="true" aria-label="Legend" onClick={() => setShowLegend(false)}><div className="bottom-sheet" onClick={(e) => e.stopPropagation()}><div className="bottom-sheet-header"><h2>Legend Jadual</h2><button type="button" onClick={() => setShowLegend(false)}>Tutup</button></div><ul><li><strong>Buffer BN:</strong> beza BN dengan pencabar jika BN menang.</li><li><strong>Margin to Win/Defend:</strong> undi tambahan untuk menang / buffer untuk kekal.</li><li><strong>Majority:</strong> beza undi pemenang dengan calon kedua.</li><li><strong>Turnout:</strong> peratus keluar mengundi.</li></ul></div></div>}
 
