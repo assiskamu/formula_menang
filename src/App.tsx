@@ -11,7 +11,13 @@ import OperasiGotv from "./pages/OperasiGotv";
 import PeneranganIstilah from "./pages/PeneranganIstilah";
 import RingkasanKerusi from "./pages/RingkasanKerusi";
 
-const actionTags: ActionTag[] = ["GOTV", "PERSUASION", "BASE"];
+const actionTags: ActionTag[] = ["GOTV", "PERSUASION", "BASE"]
+
+const displayTagLabel: Record<ActionTag, string> = {
+  BASE: "Kekalkan Penyokong",
+  PERSUASION: "Yakinkan Atas Pagar",
+  GOTV: "Keluar Mengundi (Hari Mengundi)",
+};
 
 const scenarioLabel: Record<string, string> = { low: "Rendah", base: "Sederhana", high: "Tinggi" };
 
@@ -139,14 +145,15 @@ const Filters = () => {
       </div>
 
       <div className="filters desktop-filters">
-        <label>Parlimen (Sabah)
-          <select value={filters.parlimen} onChange={(event) => setFilters((prev) => ({ ...prev, parlimen: event.target.value, dun: "" }))}>
+        <label>Parlimen
+          <select id="parlimen-filter"
+           value={filters.parlimen} onChange={(event) => setFilters((prev) => ({ ...prev, parlimen: event.target.value, dun: "" }))}>
             <option value="">Semua Parlimen</option>
             {parlimenOptions.map((parlimen) => <option key={parlimen.code} value={parlimen.code}>{parlimen.code} {parlimen.name}</option>)}
           </select>
         </label>
-        <label>DUN (ikut Parlimen)
-          <select value={filters.dun} onChange={(event) => setFilters((prev) => ({ ...prev, dun: event.target.value }))} disabled={dunOptions.length === 0}>
+        <label>DUN
+          <select id="dun-filter" value={filters.dun} onChange={(event) => setFilters((prev) => ({ ...prev, dun: event.target.value }))} disabled={dunOptions.length === 0}>
             <option value="">Semua DUN</option>
             {dunOptions.map((dun) => <option key={dun.code} value={dun.code}>{dun.code} {dun.name}</option>)}
           </select>
@@ -207,25 +214,38 @@ const Layout = () => {
       <header className="header">
         <div>
           <h1>Formula Menang</h1>
-          <p className="subtitle">Dashboard BN-centric War Room Sabah (Parlimen + DUN)</p>
+          <p className="subtitle">Dashboard untuk pilih kerusi fokus dan tindakan harian</p>
         </div>
         <nav>
-          <NavLink to="/" end>Ringkasan BN War Room</NavLink>
-          <button type="button" className={`nav-help-button ${dashboardMode === "beginner" ? "beginner-highlight" : ""}`} onClick={() => setShowHelpModal(true)}>Cara Guna (1 min)</button>
-          <NavLink to="/funnel" className={dashboardMode === "beginner" ? "beginner-muted" : ""}>Funnel Kempen</NavLink>
-          <NavLink to="/gotv" className={dashboardMode === "beginner" ? "beginner-muted" : ""}>Operasi GOTV</NavLink>
-          <NavLink to="/bantuan" className={dashboardMode === "beginner" ? "beginner-muted" : ""}>Bantuan & Maksud Angka</NavLink>
-          <NavLink to="/penerangan" className={dashboardMode === "beginner" ? "beginner-muted" : ""}>Penerangan Istilah</NavLink>
-          <NavLink to="/kemas-kini" className={dashboardMode === "beginner" ? "beginner-muted" : ""}>Kemas Kini Data</NavLink>
+          {dashboardMode === "beginner" ? (
+            <>
+              <NavLink to="/" end>Mula Di Sini</NavLink>
+              <NavLink to="/senarai">Senarai Kerusi</NavLink>
+              <NavLink to="/butiran">Butiran Kerusi</NavLink>
+              <button type="button" className="nav-help-button beginner-highlight" onClick={() => setShowHelpModal(true)}>Bantuan</button>
+            </>
+          ) : (
+            <>
+              <NavLink to="/" end>Ringkasan</NavLink>
+              <button type="button" className="nav-help-button" onClick={() => setShowHelpModal(true)}>Cara Guna (1 min)</button>
+              <NavLink to="/funnel">Perjalanan Undi</NavLink>
+              <NavLink to="/gotv">Pelan Hari Mengundi</NavLink>
+              <NavLink to="/bantuan">Bantuan & Maksud Angka</NavLink>
+              <NavLink to="/penerangan">Penerangan Istilah</NavLink>
+              <NavLink to="/kemas-kini">Kemas Kini Data</NavLink>
+            </>
+          )}
         </nav>
       </header>
       <BeginnerModeToggle />
       <DataCoverageBanner />
       <Filters />
-      <TetapanThreshold />
+      {dashboardMode === "advanced" ? <TetapanThreshold /> : null}
       <main className="page">
         <Routes>
           <Route path="/" element={<RingkasanKerusi />} />
+          <Route path="/senarai" element={<RingkasanKerusi />} />
+          <Route path="/butiran" element={<RingkasanKerusi />} />
           <Route path="/funnel" element={<FunnelKempen />} />
           <Route path="/gotv" element={<OperasiGotv />} />
           <Route path="/bantuan" element={<BantuanFormula />} />
@@ -240,14 +260,14 @@ const Layout = () => {
         <div className="bottom-sheet-overlay" role="dialog" aria-modal="true" aria-label="Istilah penting" onClick={() => setShowGlossarySheet(false)}>
           <div className="bottom-sheet" onClick={(event) => event.stopPropagation()}>
             <div className="bottom-sheet-header">
-              <h2>Istilah Pantas War Room</h2>
+              <h2>Istilah Pantas</h2>
               <button type="button" onClick={() => setShowGlossarySheet(false)} aria-label="Tutup istilah">Tutup</button>
             </div>
             <p className="muted">Rujukan ringkas untuk tag tindakan utama.</p>
             <div className="sheet-tag-grid">
               {actionTags.map((tag) => (
                 <article key={tag} className="sheet-tag-card">
-                  <h3>{tag}</h3>
+                  <h3>{displayTagLabel[tag]}</h3>
                   <p>{actionTagGuides[tag].maksud}</p>
                   <ul>
                     {actionTagGuides[tag].bilaGuna.map((point) => <li key={point}>{point}</li>)}

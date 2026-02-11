@@ -5,14 +5,14 @@ const BeginnerModeToggle = () => {
 
   return (
     <div className="beginner-toggle card" role="group" aria-label="Pilih mode paparan">
-      <p className="muted" style={{ margin: 0 }}>Pilih cara paparan dashboard:</p>
+      <p className="muted" style={{ margin: 0 }}>Tukar paparan ikut tahap pengguna:</p>
       <div className="segmented">
         <button
           type="button"
           className={dashboardMode === "beginner" ? "active" : ""}
           onClick={() => setDashboardMode("beginner")}
         >
-          Mode Pemula
+          Mode Pemula ✅
         </button>
         <button
           type="button"
