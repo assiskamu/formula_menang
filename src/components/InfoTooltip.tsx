@@ -1,3 +1,3 @@
-import HybridTooltip from "./HybridTooltip";
+import Tooltip from "./Tooltip";
 
-export default HybridTooltip;
+export default Tooltip;
