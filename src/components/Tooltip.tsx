@@ -34,6 +34,7 @@ const Tooltip = ({ label, maksud, formula, contoh, className = "" }: TooltipProp
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const isMobile = useMobile();
+  const nativeTitle = `${label}\n${maksud}${formula ? `\nFormula: ${formula}` : ""}${contoh ? `\nContoh: ${contoh}` : ""}`;
 
   useEffect(() => {
     if (!open) return;
@@ -99,6 +100,7 @@ const Tooltip = ({ label, maksud, formula, contoh, className = "" }: TooltipProp
         className={`info-tooltip ${className}`.trim()}
         aria-label={`Info: ${label}`}
         aria-expanded={open}
+        title={nativeTitle}
         onMouseEnter={() => !isMobile && setOpen(true)}
         onMouseLeave={() => !isMobile && setOpen(false)}
         onFocus={() => !isMobile && setOpen(true)}

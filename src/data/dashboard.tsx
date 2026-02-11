@@ -189,7 +189,7 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
 
         const warnings = [...validation.warnings];
         if (built.duplicateDetails.length > 0) {
-          warnings.push(`Kod DUN berganda dalam seat_details_enriched_v3.csv: ${built.duplicateDetails.join(", ")}.`);
+          warnings.push(`Kod DUN berganda dalam seat_details_enriched_with_candidates.csv: ${built.duplicateDetails.join(", ")}.`);
         }
 
         setSeats(built.seats);
